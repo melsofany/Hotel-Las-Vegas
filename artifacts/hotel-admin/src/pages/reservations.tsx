@@ -179,7 +179,14 @@ export default function Reservations() {
                         <DropdownMenuContent align="end" className="w-[180px]">
                           <DropdownMenuLabel>إجراءات الحجز</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          
+
+                          {res.receiptImageUrl && (
+                            <DropdownMenuItem onClick={() => window.open(`${import.meta.env.BASE_URL.replace(/\/$/, '')}api/storage${res.receiptImageUrl}`, '_blank', 'noopener,noreferrer')}>
+                              <Eye className="mr-2 h-4 w-4 ml-2" />
+                              <span>عرض إيصال الدفع</span>
+                            </DropdownMenuItem>
+                          )}
+
                           {(res.status === 'pending' || res.status === 'confirmed') && (
                             <DropdownMenuItem onClick={() => checkIn.mutate({ id: res.id })}>
                               <CheckCircle className="mr-2 h-4 w-4 text-status-checked-in ml-2" />

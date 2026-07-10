@@ -28,6 +28,20 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const statusLabels: Record<string, string> = {
+  pending: 'قيد الانتظار',
+  confirmed: 'مؤكد',
+  checked_in: 'تم تسجيل الدخول',
+  checked_out: 'تم تسجيل الخروج',
+  cancelled: 'ملغي',
+};
+
+function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
 function addDays(dateStr: string, days: number): string {
   if (!dateStr || !Number.isFinite(days)) return '';
   const d = new Date(dateStr + 'T00:00:00');
@@ -46,8 +60,11 @@ export default function NewReservation() {
 
   const [receiptImageUrl, setReceiptImageUrl] = useState<string | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [receiptFileName, setReceiptFileName] = useState<string | null>(null);
+  const [receiptIsPdf, setReceiptIsPdf] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [createdReservation, setCreatedReservation] = useState<{
+    id: number;
     guestName: string;
     guestPhone: string;
     roomNumber: string;
@@ -60,6 +77,8 @@ export default function NewReservation() {
     paymentReceiptNumber: string;
     notes?: string;
     employeeName: string;
+    createdAt: string;
+    status: string;
   } | null>(null);
 
   const { uploadFile, isUploading, progress } = useUpload({
@@ -110,6 +129,9 @@ export default function NewReservation() {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const isPdf = file.type === 'application/pdf';
+    setReceiptIsPdf(isPdf);
+    setReceiptFileName(file.name);
     setReceiptPreview(URL.createObjectURL(file));
     uploadFile(file);
   }
@@ -117,6 +139,8 @@ export default function NewReservation() {
   function clearReceiptImage() {
     setReceiptImageUrl(null);
     setReceiptPreview(null);
+    setReceiptFileName(null);
+    setReceiptIsPdf(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
@@ -153,7 +177,7 @@ export default function NewReservation() {
 
       const computedCheckOut = addDays(values.checkInDate, values.nights);
 
-      await createRes.mutateAsync({
+      const created = await createRes.mutateAsync({
         data: {
           roomId: room.id,
           guestId,
@@ -168,6 +192,7 @@ export default function NewReservation() {
       });
 
       setCreatedReservation({
+        id: (created as ReservationDetail).id,
         guestName: values.guestName,
         guestPhone: values.guestPhone,
         roomNumber: room.number,
@@ -180,6 +205,8 @@ export default function NewReservation() {
         paymentReceiptNumber: values.paymentReceiptNumber,
         notes: values.notes,
         employeeName: employee.name,
+        createdAt: (created as ReservationDetail).createdAt,
+        status: (created as ReservationDetail).status,
       });
 
       toast({ title: 'نجاح', description: 'تم إنشاء الحجز بنجاح' });
@@ -202,22 +229,31 @@ export default function NewReservation() {
             </div>
 
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">رقم الإيصال:</span><span className="font-mono">{createdReservation.paymentReceiptNumber}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">رقم الحجز:</span><span className="font-mono">#{createdReservation.id}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">رقم إيصال الدفع:</span><span className="font-mono">{createdReservation.paymentReceiptNumber}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">اسم الضيف:</span><span className="font-medium">{createdReservation.guestName}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">رقم هاتف الضيف:</span><span>{createdReservation.guestPhone}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">رقم الغرفة:</span><span>{createdReservation.roomNumber} {createdReservation.roomType ? `(${createdReservation.roomType})` : ''}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">تاريخ الدخول:</span><span>{createdReservation.checkInDate}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">تاريخ الخروج:</span><span>{createdReservation.checkOutDate}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">عدد الليالي:</span><span>{createdReservation.nights}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">تاريخ الخروج:</span><span>{createdReservation.checkOutDate}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">سعر الليلة:</span><span>${createdReservation.pricePerNight.toFixed(2)}</span></div>
               <div className="flex justify-between font-bold text-base border-t border-border pt-2 mt-2"><span>الإجمالي:</span><span>${createdReservation.totalAmount.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">حالة الحجز:</span><span>{statusLabels[createdReservation.status] ?? createdReservation.status}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">تاريخ إنشاء الحجز:</span><span>{formatDateTime(createdReservation.createdAt)}</span></div>
               {createdReservation.notes && (
                 <div className="flex justify-between"><span className="text-muted-foreground">ملاحظات:</span><span>{createdReservation.notes}</span></div>
               )}
               {receiptPreview && (
                 <div className="pt-4">
-                  <span className="text-muted-foreground block mb-2">صورة إيصال الدفع:</span>
-                  <img src={receiptPreview} alt="إيصال الدفع" className="max-h-64 rounded border border-border" />
+                  <span className="text-muted-foreground block mb-2">إيصال الدفع:</span>
+                  {receiptIsPdf ? (
+                    <a href={receiptPreview} target="_blank" rel="noreferrer" className="text-primary underline text-sm">
+                      {receiptFileName ?? 'عرض ملف PDF'}
+                    </a>
+                  ) : (
+                    <img src={receiptPreview} alt="إيصال الدفع" className="max-h-64 rounded border border-border" />
+                  )}
                 </div>
               )}
               <div className="flex justify-between border-t border-border pt-2 mt-2"><span className="text-muted-foreground">الموظف المسؤول:</span><span className="font-medium">{createdReservation.employeeName}</span></div>
@@ -381,12 +417,12 @@ export default function NewReservation() {
             </div>
 
             <FormItem>
-              <FormLabel>صورة إيصال الدفع</FormLabel>
+              <FormLabel>إيصال الدفع (صورة أو PDF)</FormLabel>
               <div className="flex items-center gap-4">
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/jpg,application/pdf"
                   className="hidden"
                   onChange={handleFileChange}
                 />
@@ -399,13 +435,20 @@ export default function NewReservation() {
                   ) : (
                     <>
                       <Upload className="ml-2 h-4 w-4" />
-                      رفع صورة الإيصال
+                      رفع إيصال الدفع
                     </>
                   )}
                 </Button>
                 {receiptPreview && (
                   <div className="relative">
-                    <img src={receiptPreview} alt="معاينة الإيصال" className="h-16 w-16 object-cover rounded border border-border" />
+                    {receiptIsPdf ? (
+                      <div className="h-16 w-16 flex flex-col items-center justify-center rounded border border-border bg-muted text-[10px] text-muted-foreground px-1 text-center">
+                        <span className="font-semibold">PDF</span>
+                        <span className="truncate max-w-full">{receiptFileName}</span>
+                      </div>
+                    ) : (
+                      <img src={receiptPreview} alt="معاينة الإيصال" className="h-16 w-16 object-cover rounded border border-border" />
+                    )}
                     <button
                       type="button"
                       onClick={clearReceiptImage}
@@ -418,7 +461,7 @@ export default function NewReservation() {
                 {!receiptPreview && (
                   <span className="text-sm text-muted-foreground flex items-center gap-1">
                     <ImageIcon className="h-4 w-4" />
-                    اختياري
+                    اختياري - JPG، PNG أو PDF
                   </span>
                 )}
               </div>
