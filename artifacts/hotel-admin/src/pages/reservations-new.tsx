@@ -366,12 +366,10 @@ export default function NewReservation() {
                 )}
               />
 
-              <FormItem>
-                <FormLabel>تاريخ الخروج (تلقائي)</FormLabel>
-                <FormControl>
-                  <Input type="date" value={checkOutDate} disabled readOnly />
-                </FormControl>
-              </FormItem>
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">تاريخ الخروج (تلقائي)</label>
+                <Input type="date" value={checkOutDate} disabled readOnly />
+              </div>
 
               <FormField
                 control={form.control}
@@ -387,12 +385,10 @@ export default function NewReservation() {
                 )}
               />
 
-              <FormItem>
-                <FormLabel>المبلغ الإجمالي (تلقائي)</FormLabel>
-                <FormControl>
-                  <Input value={`$${totalAmount.toFixed(2)}`} disabled readOnly className="font-bold" />
-                </FormControl>
-              </FormItem>
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">المبلغ الإجمالي (تلقائي)</label>
+                <Input value={`${totalAmount.toFixed(2)}`} disabled readOnly className="font-bold" />
+              </div>
 
               <FormField
                 control={form.control}
@@ -408,16 +404,14 @@ export default function NewReservation() {
                 )}
               />
 
-              <FormItem>
-                <FormLabel>الموظف المسؤول</FormLabel>
-                <FormControl>
-                  <Input value={employee?.name ?? ''} disabled readOnly />
-                </FormControl>
-              </FormItem>
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">الموظف المسؤول</label>
+                <Input value={employee?.name ?? ''} disabled readOnly />
+              </div>
             </div>
 
-            <FormItem>
-              <FormLabel>إيصال الدفع (صورة أو PDF)</FormLabel>
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none">إيصال الدفع (صورة أو PDF)</label>
               <div className="flex items-center gap-4">
                 <input
                   ref={fileInputRef}
@@ -465,7 +459,7 @@ export default function NewReservation() {
                   </span>
                 )}
               </div>
-            </FormItem>
+            </div>
 
             <FormField
               control={form.control}
