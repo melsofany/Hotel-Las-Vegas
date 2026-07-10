@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, CalendarDays, BedDouble, Users, UsersRound, Download, Menu, Bell, Search, Diamond } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, BedDouble, Users, UsersRound, Download, Menu, Bell, Search, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -22,8 +22,8 @@ export function Layout({ children }: { children: ReactNode }) {
       <aside className="w-full md:w-64 bg-sidebar border-l border-sidebar-border hidden md:flex flex-col flex-shrink-0">
         <div className="h-16 flex items-center px-6 border-b border-sidebar-border">
           <Link href="/" className="flex items-center gap-2 group">
-            <Diamond className="h-6 w-6 text-primary group-hover:text-primary/80 transition-colors" />
-            <span className="font-serif font-bold text-lg tracking-wide text-foreground">فندق لاس فيجاس</span>
+            <Building2 className="h-6 w-6 text-sidebar-primary group-hover:text-sidebar-primary/80 transition-colors" />
+            <span className="font-sans font-bold text-lg tracking-wide text-sidebar-foreground">فندق لاس فيجاس</span>
           </Link>
         </div>
         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
@@ -34,13 +34,13 @@ export function Layout({ children }: { children: ReactNode }) {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 group',
+                  'flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-all duration-200 group border-r-[3px]',
                   isActive 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                    ? 'bg-sidebar-accent text-sidebar-primary border-sidebar-primary' 
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border-transparent'
                 )}
               >
-                <item.icon className={cn('h-5 w-5', isActive ? 'text-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground')} />
+                <item.icon className={cn('h-5 w-5', isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground')} />
                 {item.name}
               </Link>
             );
@@ -48,12 +48,12 @@ export function Layout({ children }: { children: ReactNode }) {
         </nav>
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+            <div className="h-8 w-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary font-bold">
               م
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-medium">مدير الاستقبال</span>
-              <span className="text-xs text-muted-foreground">manager@lasvegas.hotel</span>
+              <span className="text-sm font-medium text-sidebar-foreground">مدير الاستقبال</span>
+              <span className="text-xs text-sidebar-foreground/60">manager@lasvegas.hotel</span>
             </div>
           </div>
         </div>
@@ -62,13 +62,13 @@ export function Layout({ children }: { children: ReactNode }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header - Mobile & Desktop */}
-        <header className="h-16 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 sm:px-6 z-10 sticky top-0">
+        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 sm:px-6 z-10 sticky top-0 shadow-sm">
           <div className="flex items-center md:hidden">
             <Button variant="ghost" size="icon" className="mr-2">
               <Menu className="h-5 w-5" />
             </Button>
-            <Diamond className="h-5 w-5 text-primary ml-2" />
-            <span className="font-serif font-bold text-md">لاس فيجاس</span>
+            <Building2 className="h-5 w-5 text-primary ml-2" />
+            <span className="font-sans font-bold text-md">لاس فيجاس</span>
           </div>
           
         {/* Desktop Search/Actions */}
