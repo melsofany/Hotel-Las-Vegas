@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "فندق لاس فيجاس - نظام الحجوزات"
+version = "1.0.0"
+id = "artifacts/hotel-admin"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20862
+
+[services.development]
+run = "pnpm --filter @workspace/hotel-admin run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/hotel-admin", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/hotel-admin/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20862"
+BASE_PATH = "/"

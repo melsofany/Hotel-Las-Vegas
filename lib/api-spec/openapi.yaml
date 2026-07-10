@@ -3,13 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Hotel Las Vegas Reservation Management System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: rooms
+    description: Room management
+  - name: employees
+    description: Employee management
+  - name: guests
+    description: Guest management
+  - name: reservations
+    description: Reservation management
+  - name: dashboard
+    description: Dashboard statistics
 paths:
   /healthz:
     get:
@@ -24,6 +34,574 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /rooms:
+    get:
+      operationId: listRooms
+      tags: [rooms]
+      summary: List all rooms
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Room"
+    post:
+      operationId: createRoom
+      tags: [rooms]
+      summary: Create a room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoomInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Room"
+
+  /rooms/{id}:
+    get:
+      operationId: getRoom
+      tags: [rooms]
+      summary: Get a room
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Room"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateRoom
+      tags: [rooms]
+      summary: Update a room
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoomUpdate"
+      responses:
+        "200":
+          description: Updated room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Room"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteRoom
+      tags: [rooms]
+      summary: Delete a room
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /employees:
+    get:
+      operationId: listEmployees
+      tags: [employees]
+      summary: List all employees
+      responses:
+        "200":
+          description: List of employees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employee"
+    post:
+      operationId: createEmployee
+      tags: [employees]
+      summary: Create an employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+
+  /employees/{id}:
+    get:
+      operationId: getEmployee
+      tags: [employees]
+      summary: Get an employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateEmployee
+      tags: [employees]
+      summary: Update an employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeUpdate"
+      responses:
+        "200":
+          description: Updated employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteEmployee
+      tags: [employees]
+      summary: Delete an employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /guests:
+    get:
+      operationId: listGuests
+      tags: [guests]
+      summary: List all guests
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of guests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Guest"
+    post:
+      operationId: createGuest
+      tags: [guests]
+      summary: Create a guest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+
+  /guests/{id}:
+    get:
+      operationId: getGuest
+      tags: [guests]
+      summary: Get a guest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Guest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateGuest
+      tags: [guests]
+      summary: Update a guest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestUpdate"
+      responses:
+        "200":
+          description: Updated guest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteGuest
+      tags: [guests]
+      summary: Delete a guest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /reservations:
+    get:
+      operationId: listReservations
+      tags: [reservations]
+      summary: List all reservations
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: employeeId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: roomId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: checkInDate
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: checkOutDate
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of reservations with full details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReservationDetail"
+    post:
+      operationId: createReservation
+      tags: [reservations]
+      summary: Create a reservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDetail"
+        "400":
+          description: Bad request or room not available
+
+  /reservations/{id}:
+    get:
+      operationId: getReservation
+      tags: [reservations]
+      summary: Get a reservation with full details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reservation detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDetail"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateReservation
+      tags: [reservations]
+      summary: Update a reservation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationUpdate"
+      responses:
+        "200":
+          description: Updated reservation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDetail"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteReservation
+      tags: [reservations]
+      summary: Delete a reservation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /reservations/{id}/checkin:
+    patch:
+      operationId: checkInReservation
+      tags: [reservations]
+      summary: Check in a guest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Checked in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDetail"
+        "404":
+          description: Not found
+
+  /reservations/{id}/checkout:
+    patch:
+      operationId: checkOutReservation
+      tags: [reservations]
+      summary: Check out a guest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Checked out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDetail"
+        "404":
+          description: Not found
+
+  /reservations/{id}/cancel:
+    patch:
+      operationId: cancelReservation
+      tags: [reservations]
+      summary: Cancel a reservation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDetail"
+        "404":
+          description: Not found
+
+  /reservations/export/csv:
+    get:
+      operationId: exportReservationsCSV
+      tags: [reservations]
+      summary: Export all reservations as CSV for Google Sheets
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: CSV file download
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard summary statistics
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/occupancy:
+    get:
+      operationId: getRoomOccupancy
+      tags: [dashboard]
+      summary: Get room occupancy breakdown by type and status
+      responses:
+        "200":
+          description: Room occupancy data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OccupancyItem"
+
+  /dashboard/recent-reservations:
+    get:
+      operationId: getRecentReservations
+      tags: [dashboard]
+      summary: Get the 10 most recent reservations
+      responses:
+        "200":
+          description: Recent reservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReservationDetail"
+
+  /dashboard/employee-stats:
+    get:
+      operationId: getEmployeeStats
+      tags: [dashboard]
+      summary: Get reservation count per employee
+      responses:
+        "200":
+          description: Employee statistics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EmployeeStatItem"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +612,273 @@ components:
       required:
         - status
 
+    Room:
+      type: object
+      required: [id, number, type, floor, status, pricePerNight, createdAt]
+      properties:
+        id:
+          type: integer
+        number:
+          type: string
+        type:
+          type: string
+        floor:
+          type: integer
+        status:
+          type: string
+        pricePerNight:
+          type: number
+        description:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    RoomInput:
+      type: object
+      required: [number, type, floor, pricePerNight]
+      properties:
+        number:
+          type: string
+        type:
+          type: string
+        floor:
+          type: integer
+        pricePerNight:
+          type: number
+        description:
+          type: string
+
+    RoomUpdate:
+      type: object
+      properties:
+        number:
+          type: string
+        type:
+          type: string
+        floor:
+          type: integer
+        status:
+          type: string
+        pricePerNight:
+          type: number
+        description:
+          type: string
+
+    Employee:
+      type: object
+      required: [id, name, role, phone, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        role:
+          type: string
+        phone:
+          type: string
+        email:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    EmployeeInput:
+      type: object
+      required: [name, role, phone]
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+
+    EmployeeUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+
+    Guest:
+      type: object
+      required: [id, name, phone, nationalId, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        nationalId:
+          type: string
+        email:
+          type: ["string", "null"]
+        nationality:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    GuestInput:
+      type: object
+      required: [name, phone, nationalId]
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        nationalId:
+          type: string
+        email:
+          type: string
+        nationality:
+          type: string
+
+    GuestUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        nationalId:
+          type: string
+        email:
+          type: string
+        nationality:
+          type: string
+
+    ReservationDetail:
+      type: object
+      required: [id, roomId, guestId, employeeId, checkInDate, checkOutDate, status, totalAmount, paymentReceiptNumber, createdAt, room, guest, employee]
+      properties:
+        id:
+          type: integer
+        roomId:
+          type: integer
+        guestId:
+          type: integer
+        employeeId:
+          type: integer
+        checkInDate:
+          type: string
+        checkOutDate:
+          type: string
+        status:
+          type: string
+        totalAmount:
+          type: number
+        paymentReceiptNumber:
+          type: string
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        room:
+          $ref: "#/components/schemas/Room"
+        guest:
+          $ref: "#/components/schemas/Guest"
+        employee:
+          $ref: "#/components/schemas/Employee"
+
+    ReservationInput:
+      type: object
+      required: [roomId, guestId, employeeId, checkInDate, checkOutDate, paymentReceiptNumber]
+      properties:
+        roomId:
+          type: integer
+        guestId:
+          type: integer
+        employeeId:
+          type: integer
+        checkInDate:
+          type: string
+        checkOutDate:
+          type: string
+        totalAmount:
+          type: number
+        paymentReceiptNumber:
+          type: string
+        notes:
+          type: string
+
+    ReservationUpdate:
+      type: object
+      properties:
+        roomId:
+          type: integer
+        guestId:
+          type: integer
+        employeeId:
+          type: integer
+        checkInDate:
+          type: string
+        checkOutDate:
+          type: string
+        totalAmount:
+          type: number
+        paymentReceiptNumber:
+          type: string
+        notes:
+          type: string
+        status:
+          type: string
+
+    DashboardStats:
+      type: object
+      required: [totalRooms, occupiedRooms, availableRooms, reservedRooms, totalReservations, activeReservations, todayCheckIns, todayCheckOuts, monthlyRevenue, totalRevenue]
+      properties:
+        totalRooms:
+          type: integer
+        occupiedRooms:
+          type: integer
+        availableRooms:
+          type: integer
+        reservedRooms:
+          type: integer
+        totalReservations:
+          type: integer
+        activeReservations:
+          type: integer
+        todayCheckIns:
+          type: integer
+        todayCheckOuts:
+          type: integer
+        monthlyRevenue:
+          type: number
+        totalRevenue:
+          type: number
+
+    OccupancyItem:
+      type: object
+      required: [type, total, occupied, available]
+      properties:
+        type:
+          type: string
+        total:
+          type: integer
+        occupied:
+          type: integer
+        available:
+          type: integer
+
+    EmployeeStatItem:
+      type: object
+      required: [employeeId, employeeName, role, totalReservations, activeReservations]
+      properties:
+        employeeId:
+          type: integer
+        employeeName:
+          type: string
+        role:
+          type: string
+        totalReservations:
+          type: integer
+        activeReservations:
+          type: integer

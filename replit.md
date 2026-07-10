@@ -1,36 +1,49 @@
-# [Project name]
+# فندق لاس فيجاس — نظام إدارة الحجوزات
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+نظام إداري متكامل للشركة الدولية لإدارة الفنادق، مخصص لفندق لاس فيجاس (42 غرفة). يتيح للموظفين إدارة الحجوزات، تتبع حالة الغرف، وتصدير البيانات لـ Google Sheets.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `pnpm --filter @workspace/api-server run dev` — تشغيل API server (port 8080)
+- `pnpm --filter @workspace/hotel-admin run dev` — تشغيل واجهة المستخدم (port 20862)
+- `pnpm run typecheck` — فحص TypeScript الكامل
+- `pnpm run build` — typecheck + build جميع الحزم
+- `pnpm --filter @workspace/api-spec run codegen` — إعادة توليد API hooks و Zod schemas
+- `pnpm --filter @workspace/db run push` — تطبيق تغييرات schema على قاعدة البيانات
+- Required env: `DATABASE_URL` — PostgreSQL connection string
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
+- Frontend: React + Vite + Wouter + TanStack Query + shadcn/ui + Recharts
+- API: Express 5 + Zod validation
 - DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
+- Validation: Zod (zod/v4), drizzle-zod
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — مصدر الحقيقة لعقود API
+- `lib/db/src/schema/` — Drizzle schema: rooms, employees, guests, reservations
+- `artifacts/api-server/src/routes/` — routes: rooms, employees, guests, reservations, dashboard
+- `artifacts/hotel-admin/src/` — واجهة React الأمامية
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- OpenAPI-first: الـ spec هو مصدر الحقيقة، codegen ينتج hooks و Zod schemas تلقائياً
+- Database transactions: جميع عمليات lifecycle للحجز (create/check-in/check-out/cancel/delete) تستخدم `db.transaction()` مع SELECT FOR UPDATE لضمان اتساق حالة الغرف
+- PATCH /reservations/:id مقيد بحقول metadata فقط — التغييرات في حالة الحجز تمر عبر endpoints مخصصة
+- CSV export يتضمن BOM (UTF-8) لدعم Excel والعربية
+- واجهة RTL كاملة مع خطوط Cairo وPlayfair Display
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **لوحة التحكم**: إحصائيات فورية، نسبة إشغال حسب نوع الغرفة، أفضل الموظفين، آخر الحجوزات
+- **الحجوزات**: جدول كامل مع فلترة متعددة، check-in/check-out/cancel، رقم إيصال الدفع، اسم الموظف المسؤول
+- **الغرف**: شبكة الـ 42 غرفة (standard/deluxe/suite/penthouse) مع حالة كل غرفة
+- **الضيوف والموظفين**: دليل مع إمكانية البحث والإضافة والتعديل
+- **التصدير**: تصدير CSV جاهز للاستيراد في Google Sheets
 
 ## User preferences
 
@@ -38,7 +51,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- عند تغيير schema الـ DB، نفّذ `pnpm --filter @workspace/db run push` ثم أعد تشغيل API server
+- بعد أي تغيير في openapi.yaml، نفّذ codegen قبل استخدام الأنواع المحدّثة
+- نسبة الإشغال = (occupied + reserved) / totalRooms
 
 ## Pointers
 
