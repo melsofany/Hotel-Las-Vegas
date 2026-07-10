@@ -33,6 +33,8 @@ import type {
   ListGuestsParams,
   ListReservationsParams,
   ListRoomsParams,
+  LoginByPhoneRequest,
+  LoginResponse,
   OccupancyItem,
   ReservationDetail,
   ReservationInput,
@@ -520,6 +522,77 @@ export const useDeleteRoom = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDeleteRoomMutationOptions(options));
+    }
+
+export const getLoginByPhoneUrl = () => {
+
+
+
+
+  return `/api/auth/login-by-phone`
+}
+
+/**
+ * @summary Log in with an employee phone number
+ */
+export const loginByPhone = async (loginByPhoneRequest: LoginByPhoneRequest, options?: RequestInit): Promise<LoginResponse> => {
+
+  return customFetch<LoginResponse>(getLoginByPhoneUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(loginByPhoneRequest)
+  }
+);}
+
+
+
+
+
+export const getLoginByPhoneMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginByPhone>>, TError,{data: BodyType<LoginByPhoneRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof loginByPhone>>, TError,{data: BodyType<LoginByPhoneRequest>}, TContext> => {
+
+const mutationKey = ['loginByPhone'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof loginByPhone>>, {data: BodyType<LoginByPhoneRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  loginByPhone(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LoginByPhoneMutationResult = NonNullable<Awaited<ReturnType<typeof loginByPhone>>>
+    export type LoginByPhoneMutationBody = BodyType<LoginByPhoneRequest>
+    export type LoginByPhoneMutationError = ErrorType<void>
+
+    /**
+ * @summary Log in with an employee phone number
+ */
+export const useLoginByPhone = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginByPhone>>, TError,{data: BodyType<LoginByPhoneRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof loginByPhone>>,
+        TError,
+        {data: BodyType<LoginByPhoneRequest>},
+        TContext
+      > => {
+      return useMutation(getLoginByPhoneMutationOptions(options));
     }
 
 export const getListEmployeesUrl = () => {

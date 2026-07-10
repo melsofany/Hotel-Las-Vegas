@@ -1,12 +1,20 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, CalendarDays, BedDouble, Users, UsersRound, Download, Menu, Bell, Search, Building2, X } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, BedDouble, Users, UsersRound, Download, Menu, Bell, Search, Building2, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth-context';
+
+const roleLabels: Record<string, string> = {
+  manager: 'مدير',
+  supervisor: 'مشرف',
+  receptionist: 'موظف استقبال',
+};
 
 export function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { employee, logout } = useAuth();
 
   useEffect(() => {
     setIsSidebarOpen(false);
@@ -59,13 +67,22 @@ export function Layout({ children }: { children: ReactNode }) {
       </nav>
       <div className="p-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary font-bold">
-            م
+          <div className="h-8 w-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary font-bold flex-shrink-0">
+            {employee?.name?.charAt(0) ?? '؟'}
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-sidebar-foreground">مدير الاستقبال</span>
-            <span className="text-xs text-sidebar-foreground/60">manager@lasvegas.hotel</span>
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="text-sm font-medium text-sidebar-foreground truncate">{employee?.name ?? 'مستخدم'}</span>
+            <span className="text-xs text-sidebar-foreground/60">{employee ? roleLabels[employee.role] ?? employee.role : ''}</span>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent flex-shrink-0"
+            onClick={logout}
+            title="تسجيل الخروج"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </>

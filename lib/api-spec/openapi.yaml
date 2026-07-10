@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
   - name: rooms
     description: Room management
   - name: employees
@@ -138,6 +140,27 @@ paths:
           description: Deleted
         "404":
           description: Not found
+
+  /auth/login-by-phone:
+    post:
+      operationId: loginByPhone
+      tags: [auth]
+      summary: Log in with an employee phone number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginByPhoneRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "404":
+          description: No employee found with this phone number
 
   /employees:
     get:
@@ -663,6 +686,22 @@ components:
           type: number
         description:
           type: string
+
+    LoginByPhoneRequest:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          type: string
+
+    LoginResponse:
+      type: object
+      required: [token, employee]
+      properties:
+        token:
+          type: string
+        employee:
+          $ref: "#/components/schemas/Employee"
 
     Employee:
       type: object

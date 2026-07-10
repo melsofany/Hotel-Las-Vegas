@@ -119,6 +119,26 @@ export const DeleteRoomResponse = zod.void()
 
 
 /**
+ * @summary Log in with an employee phone number
+ */
+export const LoginByPhoneBody = zod.object({
+  "phone": zod.string()
+})
+
+export const LoginByPhoneResponse = zod.object({
+  "token": zod.string(),
+  "employee": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "phone": zod.string(),
+  "email": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+})
+
+
+/**
  * @summary List all employees
  */
 export const ListEmployeesResponseItem = zod.object({

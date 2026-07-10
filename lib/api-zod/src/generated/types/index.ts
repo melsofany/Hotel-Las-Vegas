@@ -19,6 +19,8 @@ export * from './healthStatus';
 export * from './listGuestsParams';
 export * from './listReservationsParams';
 export * from './listRoomsParams';
+export * from './loginByPhoneRequest';
+export * from './loginResponse';
 export * from './occupancyItem';
 export * from './reservationDetail';
 export * from './reservationInput';

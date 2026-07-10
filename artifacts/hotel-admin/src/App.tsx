@@ -3,6 +3,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { AuthProvider, useAuth } from '@/lib/auth-context';
+import { Loader2 } from 'lucide-react';
 
 import Dashboard from './pages/dashboard';
 import Reservations from './pages/reservations';
@@ -11,6 +13,7 @@ import Rooms from './pages/rooms';
 import Guests from './pages/guests';
 import Employees from './pages/employees';
 import Export from './pages/export';
+import Login from './pages/login';
 
 const queryClient = new QueryClient();
 
@@ -29,13 +32,33 @@ function Router() {
   );
 }
 
+function AuthGate() {
+  const { employee, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!employee) {
+    return <Login />;
+  }
+
+  return <Router />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
-        </WouterRouter>
+        <AuthProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+            <AuthGate />
+          </WouterRouter>
+        </AuthProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

@@ -38,6 +38,10 @@ export interface RoomUpdate {
   description?: string;
 }
 
+export interface LoginByPhoneRequest {
+  phone: string;
+}
+
 export interface Employee {
   id: number;
   name: string;
@@ -46,6 +50,11 @@ export interface Employee {
   /** @nullable */
   email?: string | null;
   createdAt: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  employee: Employee;
 }
 
 export interface EmployeeInput {
