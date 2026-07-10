@@ -49,6 +49,11 @@
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
 
+## Running the project
+
+- Workflows `artifacts/api-server: API Server` (port 8080) and `artifacts/hotel-admin: web` (port 20862) are configured and running.
+- A fresh database has no employees, so the login page has no account to sign in with. There is no signup route by design — seed the first admin manually via a SQL insert into `employees`, hashing the password the same way `artifacts/api-server/src/lib/password.ts` does. Rotate/replace any seeded credentials after first login and don't commit real credentials to this file.
+
 ## Gotchas
 
 - عند تغيير schema الـ DB، نفّذ `pnpm --filter @workspace/db run push` ثم أعد تشغيل API server
