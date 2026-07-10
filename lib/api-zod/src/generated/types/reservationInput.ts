@@ -14,5 +14,6 @@ export interface ReservationInput {
   checkOutDate: string;
   totalAmount?: number;
   paymentReceiptNumber: string;
+  receiptImageUrl?: string;
   notes?: string;
 }

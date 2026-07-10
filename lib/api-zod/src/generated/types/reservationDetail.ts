@@ -20,6 +20,8 @@ export interface ReservationDetail {
   totalAmount: number;
   paymentReceiptNumber: string;
   /** @nullable */
+  receiptImageUrl?: string | null;
+  /** @nullable */
   notes?: string | null;
   createdAt: string;
   room: Room;

@@ -15,6 +15,7 @@ export const reservationsTable = pgTable("reservations", {
   status: text("status").notNull().default("pending"), // pending, confirmed, checked_in, checked_out, cancelled
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull().default("0"),
   paymentReceiptNumber: text("payment_receipt_number").notNull(),
+  receiptImageUrl: text("receipt_image_url"),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
