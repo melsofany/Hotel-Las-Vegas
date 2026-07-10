@@ -2,6 +2,8 @@ import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, employeesTable } from "@workspace/db";
 import { LoginByPhoneBody } from "@workspace/api-zod";
+import { verifyPassword } from "../lib/password";
+import { createToken } from "../lib/auth-token";
 
 const router: IRouter = Router();
 
@@ -26,7 +28,12 @@ router.post("/auth/login-by-phone", async (req, res): Promise<void> => {
     return;
   }
 
-  const token = Buffer.from(`employee:${employee.id}:${Date.now()}`).toString("base64url");
+  if (!employee.passwordHash || !verifyPassword(parsed.data.password, employee.passwordHash)) {
+    res.status(401).json({ error: "الرقم السري غير صحيح" });
+    return;
+  }
+
+  const token = createToken(employee.id);
 
   res.json({
     token,

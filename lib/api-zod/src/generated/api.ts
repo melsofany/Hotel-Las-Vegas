@@ -122,7 +122,8 @@ export const DeleteRoomResponse = zod.void()
  * @summary Log in with an employee phone number
  */
 export const LoginByPhoneBody = zod.object({
-  "phone": zod.string()
+  "phone": zod.string(),
+  "password": zod.string()
 })
 
 export const LoginByPhoneResponse = zod.object({
@@ -130,7 +131,7 @@ export const LoginByPhoneResponse = zod.object({
   "employee": zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()
@@ -144,7 +145,7 @@ export const LoginByPhoneResponse = zod.object({
 export const ListEmployeesResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()
@@ -157,15 +158,16 @@ export const ListEmployeesResponse = zod.array(ListEmployeesResponseItem)
  */
 export const CreateEmployeeBody = zod.object({
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
-  "email": zod.string().optional()
+  "email": zod.string().optional(),
+  "password": zod.string()
 })
 
 export const CreateEmployeeResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()
@@ -182,7 +184,7 @@ export const GetEmployeeParams = zod.object({
 export const GetEmployeeResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()
@@ -198,15 +200,16 @@ export const UpdateEmployeeParams = zod.object({
 
 export const UpdateEmployeeBody = zod.object({
   "name": zod.string().optional(),
-  "role": zod.string().optional(),
+  "role": zod.enum(['admin', 'employee']).optional(),
   "phone": zod.string().optional(),
-  "email": zod.string().optional()
+  "email": zod.string().optional(),
+  "password": zod.string().optional()
 })
 
 export const UpdateEmployeeResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()
@@ -363,7 +366,7 @@ export const ListReservationsResponseItem = zod.object({
   "employee": zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()
@@ -420,7 +423,7 @@ export const CreateReservationResponse = zod.object({
   "employee": zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()
@@ -469,7 +472,7 @@ export const GetReservationResponse = zod.object({
   "employee": zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()
@@ -530,7 +533,7 @@ export const UpdateReservationResponse = zod.object({
   "employee": zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()
@@ -589,7 +592,7 @@ export const CheckInReservationResponse = zod.object({
   "employee": zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()
@@ -638,7 +641,7 @@ export const CheckOutReservationResponse = zod.object({
   "employee": zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()
@@ -687,7 +690,7 @@ export const CancelReservationResponse = zod.object({
   "employee": zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()
@@ -773,7 +776,7 @@ export const GetRecentReservationsResponseItem = zod.object({
   "employee": zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "role": zod.string(),
+  "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
   "createdAt": zod.string()

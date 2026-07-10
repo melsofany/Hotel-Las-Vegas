@@ -6,9 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 
 const roleLabels: Record<string, string> = {
-  manager: 'مدير',
-  supervisor: 'مشرف',
-  receptionist: 'موظف استقبال',
+  admin: 'مدير النظام',
+  employee: 'موظف',
 };
 
 export function Layout({ children }: { children: ReactNode }) {

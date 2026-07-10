@@ -1,28 +1,34 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { Layout } from '@/components/layout';
 import { PageHeader } from '@/components/ui-custom';
-import { useListEmployees, useGetEmployeeStats } from '@workspace/api-client-react';
-import { ShieldAlert, Award, Mail, Phone, Search, UsersRound, TrendingUp } from 'lucide-react';
+import { useListEmployees, useGetEmployeeStats, useCreateEmployee, getListEmployeesQueryKey, getGetEmployeeStatsQueryKey } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { ShieldAlert, Mail, Phone, Search, UsersRound, TrendingUp, Plus, Loader2 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Employees() {
+  const { employee: currentEmployee } = useAuth();
+  const isAdmin = currentEmployee?.role === 'admin';
   const { data: employees, isLoading: empLoading } = useListEmployees();
   const { data: stats, isLoading: statsLoading } = useGetEmployeeStats();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const getRoleLabel = (role: string) => {
     switch (role) {
-      case 'manager': return 'مدير';
-      case 'supervisor': return 'مشرف';
-      case 'receptionist': return 'موظف استقبال';
+      case 'admin': return 'مدير النظام';
+      case 'employee': return 'موظف';
       default: return role;
     }
   };
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'manager': return 'bg-destructive/10 text-destructive border-destructive/20';
-      case 'supervisor': return 'bg-primary/10 text-primary border-primary/20';
+      case 'admin': return 'bg-destructive/10 text-destructive border-destructive/20';
       default: return 'bg-muted text-muted-foreground border-border';
     }
   };
@@ -55,10 +61,17 @@ export default function Employees() {
 
   return (
     <Layout>
-      <PageHeader title="طاقم العمل" description="إدارة موظفي الفندق وأدائهم" />
+      <div className="flex items-center justify-between gap-4 mb-2">
+        <PageHeader title="طاقم العمل" description="إدارة موظفي الفندق وأدائهم" />
+        {isAdmin && (
+          <Button onClick={() => setIsDialogOpen(true)} className="flex-shrink-0">
+            <Plus className="h-4 w-4 ml-1" /> إضافة موظف
+          </Button>
+        )}
+      </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-card border border-card-border rounded-lg p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
             <UsersRound className="h-5 w-5 text-primary" />
@@ -73,17 +86,8 @@ export default function Employees() {
             <ShieldAlert className="h-5 w-5 text-destructive" />
           </div>
           <div>
-            <div className="text-xl font-bold text-foreground">{roleCounts.manager ?? 0}</div>
-            <div className="text-xs text-muted-foreground">مديرون</div>
-          </div>
-        </div>
-        <div className="bg-card border border-card-border rounded-lg p-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Award className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <div className="text-xl font-bold text-foreground">{roleCounts.supervisor ?? 0}</div>
-            <div className="text-xs text-muted-foreground">مشرفون</div>
+            <div className="text-xl font-bold text-foreground">{roleCounts.admin ?? 0}</div>
+            <div className="text-xs text-muted-foreground">مديرو النظام</div>
           </div>
         </div>
         <div className="bg-card border border-card-border rounded-lg p-4 flex items-center gap-3">
@@ -91,8 +95,8 @@ export default function Employees() {
             <TrendingUp className="h-5 w-5 text-muted-foreground" />
           </div>
           <div>
-            <div className="text-xl font-bold text-foreground">{roleCounts.receptionist ?? 0}</div>
-            <div className="text-xs text-muted-foreground">موظفو استقبال</div>
+            <div className="text-xl font-bold text-foreground">{roleCounts.employee ?? 0}</div>
+            <div className="text-xs text-muted-foreground">موظفون</div>
           </div>
         </div>
       </div>
@@ -115,9 +119,8 @@ export default function Employees() {
           className="bg-card border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
         >
           <option value="all">كل الأدوار</option>
-          <option value="manager">مدير</option>
-          <option value="supervisor">مشرف</option>
-          <option value="receptionist">موظف استقبال</option>
+          <option value="admin">مدير النظام</option>
+          <option value="employee">موظف</option>
         </select>
       </div>
 
@@ -144,7 +147,7 @@ export default function Employees() {
                     <div>
                       <h3 className="font-bold text-lg text-foreground">{employee.name}</h3>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border mt-1 ${getRoleColor(employee.role)}`}>
-                        {employee.role === 'manager' && <ShieldAlert className="h-3 w-3 mr-1" />}
+                        {employee.role === 'admin' && <ShieldAlert className="h-3 w-3 mr-1" />}
                         {getRoleLabel(employee.role)}
                       </span>
                     </div>
@@ -182,6 +185,118 @@ export default function Employees() {
           })}
         </div>
       )}
+
+      {isAdmin && (
+        <AddEmployeeDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      )}
     </Layout>
+  );
+}
+
+function AddEmployeeDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'admin' | 'employee'>('employee');
+  const [email, setEmail] = useState('');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const createMutation = useCreateEmployee({
+    mutation: {
+      onSuccess: () => {
+        toast({ title: 'تم إضافة الموظف بنجاح' });
+        queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetEmployeeStatsQueryKey() });
+        setName(''); setPhone(''); setPassword(''); setEmail(''); setRole('employee');
+        onOpenChange(false);
+      },
+      onError: (err: unknown) => {
+        toast({ title: 'حدث خطأ', description: err instanceof Error ? err.message : undefined, variant: 'destructive' });
+      },
+    },
+  });
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !phone.trim() || !password.trim()) return;
+    createMutation.mutate({
+      data: { name: name.trim(), phone: phone.trim(), password: password.trim(), role, email: email.trim() || undefined },
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>إضافة موظف جديد</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4" dir="rtl">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">الاسم</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">رقم الهاتف</label>
+            <input
+              type="tel"
+              dir="ltr"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="01xxxxxxxxx"
+              className="w-full bg-background border border-input rounded px-3 py-2 text-sm text-right focus:outline-none focus:ring-1 focus:ring-primary"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">الرقم السري</label>
+            <input
+              type="password"
+              dir="ltr"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-background border border-input rounded px-3 py-2 text-sm text-right focus:outline-none focus:ring-1 focus:ring-primary"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">البريد الإلكتروني (اختياري)</label>
+            <input
+              type="email"
+              dir="ltr"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-background border border-input rounded px-3 py-2 text-sm text-right focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">الدور</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as 'admin' | 'employee')}
+              className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="employee">موظف</option>
+              <option value="admin">مدير النظام</option>
+            </select>
+          </div>
+          <Button type="submit" className="w-full" disabled={createMutation.isPending}>
+            {createMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin ml-2" /> جاري الإضافة...
+              </>
+            ) : (
+              'إضافة الموظف'
+            )}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

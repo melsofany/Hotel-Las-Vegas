@@ -689,9 +689,11 @@ components:
 
     LoginByPhoneRequest:
       type: object
-      required: [phone]
+      required: [phone, password]
       properties:
         phone:
+          type: string
+        password:
           type: string
 
     LoginResponse:
@@ -713,6 +715,7 @@ components:
           type: string
         role:
           type: string
+          enum: [admin, employee]
         phone:
           type: string
         email:
@@ -722,15 +725,18 @@ components:
 
     EmployeeInput:
       type: object
-      required: [name, role, phone]
+      required: [name, role, phone, password]
       properties:
         name:
           type: string
         role:
           type: string
+          enum: [admin, employee]
         phone:
           type: string
         email:
+          type: string
+        password:
           type: string
 
     EmployeeUpdate:
@@ -740,9 +746,12 @@ components:
           type: string
         role:
           type: string
+          enum: [admin, employee]
         phone:
           type: string
         email:
+          type: string
+        password:
           type: string
 
     Guest:

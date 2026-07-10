@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import { Building2, Phone, Loader2 } from 'lucide-react';
+import { Building2, Phone, Lock, Loader2 } from 'lucide-react';
 import { useLoginByPhone } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const { login } = useAuth();
 
@@ -14,8 +15,12 @@ export default function Login() {
       onSuccess: (data) => {
         login(data);
       },
-      onError: () => {
-        setError('لا يوجد موظف مسجل بهذا رقم الهاتف');
+      onError: (err: unknown) => {
+        const message =
+          err && typeof err === 'object' && 'status' in err && (err as { status: number }).status === 401
+            ? 'الرقم السري غير صحيح'
+            : 'لا يوجد موظف مسجل بهذا رقم الهاتف';
+        setError(message);
       },
     },
   });
@@ -23,11 +28,11 @@ export default function Login() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!phone.trim()) {
-      setError('من فضلك أدخل رقم الهاتف');
+    if (!phone.trim() || !password.trim()) {
+      setError('من فضلك أدخل رقم الهاتف والرقم السري');
       return;
     }
-    loginMutation.mutate({ data: { phone: phone.trim() } });
+    loginMutation.mutate({ data: { phone: phone.trim(), password: password.trim() } });
   };
 
   return (
@@ -53,6 +58,20 @@ export default function Login() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="01xxxxxxxxx"
+                dir="ltr"
+                className="w-full bg-background border border-input rounded pr-10 pl-3 py-2.5 text-sm text-right focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">الرقم السري</label>
+            <div className="relative">
+              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 dir="ltr"
                 className="w-full bg-background border border-input rounded pr-10 pl-3 py-2.5 text-sm text-right focus:outline-none focus:ring-1 focus:ring-primary"
               />

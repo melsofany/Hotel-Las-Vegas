@@ -1,0 +1,2 @@
+- [Hotel Las Vegas auth model](hotel-las-vegas-auth.md) — two roles only (admin/employee), phone+password login, admin-gated employee creation; keep in sync if roles change again.
+- [Orval-generated zod index duplicate exports](orval-zod-index-dup-exports.md) — lib/api-zod/src/index.ts can end up with duplicate `export *` lines; dedupe after any codegen run.

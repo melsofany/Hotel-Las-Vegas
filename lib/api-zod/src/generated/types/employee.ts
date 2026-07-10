@@ -5,11 +5,12 @@
  * Hotel Las Vegas Reservation Management System API
  * OpenAPI spec version: 0.1.0
  */
+import type { EmployeeRole } from './employeeRole';
 
 export interface Employee {
   id: number;
   name: string;
-  role: string;
+  role: EmployeeRole;
   phone: string;
   /** @nullable */
   email?: string | null;

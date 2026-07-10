@@ -40,12 +40,21 @@ export interface RoomUpdate {
 
 export interface LoginByPhoneRequest {
   phone: string;
+  password: string;
 }
+
+export type EmployeeRole = typeof EmployeeRole[keyof typeof EmployeeRole];
+
+
+export const EmployeeRole = {
+  admin: 'admin',
+  employee: 'employee',
+} as const;
 
 export interface Employee {
   id: number;
   name: string;
-  role: string;
+  role: EmployeeRole;
   phone: string;
   /** @nullable */
   email?: string | null;
@@ -57,18 +66,36 @@ export interface LoginResponse {
   employee: Employee;
 }
 
+export type EmployeeInputRole = typeof EmployeeInputRole[keyof typeof EmployeeInputRole];
+
+
+export const EmployeeInputRole = {
+  admin: 'admin',
+  employee: 'employee',
+} as const;
+
 export interface EmployeeInput {
   name: string;
-  role: string;
+  role: EmployeeInputRole;
   phone: string;
   email?: string;
+  password: string;
 }
+
+export type EmployeeUpdateRole = typeof EmployeeUpdateRole[keyof typeof EmployeeUpdateRole];
+
+
+export const EmployeeUpdateRole = {
+  admin: 'admin',
+  employee: 'employee',
+} as const;
 
 export interface EmployeeUpdate {
   name?: string;
-  role?: string;
+  role?: EmployeeUpdateRole;
   phone?: string;
   email?: string;
+  password?: string;
 }
 
 export interface Guest {

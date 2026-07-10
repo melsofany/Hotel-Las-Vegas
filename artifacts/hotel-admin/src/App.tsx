@@ -4,7 +4,18 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
+import { setAuthTokenGetter } from '@workspace/api-client-react';
 import { Loader2 } from 'lucide-react';
+
+setAuthTokenGetter(() => {
+  try {
+    const raw = localStorage.getItem('hotel-admin-auth');
+    if (!raw) return null;
+    return (JSON.parse(raw)?.token as string | undefined) ?? null;
+  } catch {
+    return null;
+  }
+});
 
 import Dashboard from './pages/dashboard';
 import Reservations from './pages/reservations';
