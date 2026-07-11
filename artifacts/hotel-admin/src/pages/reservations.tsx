@@ -1,9 +1,9 @@
 import { Layout } from '@/components/layout';
 import { PageHeader, StatusBadge } from '@/components/ui-custom';
 import { useAuth } from '@/lib/auth-context';
-import { useListReservations, useCheckInReservation, useCheckOutReservation, useCancelReservation, useDeleteReservation } from '@workspace/api-client-react';
+import { useListReservations, useCheckInReservation, useCheckOutReservation, useCancelReservation } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, Filter, MoreHorizontal, CheckCircle, LogOut, XCircle, Trash, Edit, Eye } from 'lucide-react';
+import { Plus, Search, Filter, MoreHorizontal, CheckCircle, LogOut, XCircle, Edit, Eye } from 'lucide-react';
 import { Link } from 'wouter';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -16,16 +16,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
@@ -67,17 +57,6 @@ export default function Reservations() {
     }
   });
 
-  const deleteRes = useDeleteReservation({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['reservations'] });
-        toast({ title: 'نجاح', description: 'تم حذف الحجز بنجاح' });
-        setDeleteId(null);
-      }
-    }
-  });
-
-  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const statuses = [
     { value: '', label: 'الكل' },
@@ -212,11 +191,6 @@ export default function Reservations() {
                             </DropdownMenuItem>
                           )}
 
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive focus:bg-destructive/10" onClick={() => setDeleteId(res.id)}>
-                            <Trash className="mr-2 h-4 w-4 ml-2" />
-                            <span>حذف السجل</span>
-                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -228,26 +202,6 @@ export default function Reservations() {
         </div>
       </div>
 
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent dir="rtl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
-            <AlertDialogDescription>
-              هذا الإجراء لا يمكن التراجع عنه. سيتم حذف الحجز بشكل نهائي من النظام.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex gap-2 justify-end">
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-              onClick={() => deleteId && deleteRes.mutate({ id: deleteId })}
-              disabled={deleteRes.isPending}
-            >
-              {deleteRes.isPending ? 'جاري الحذف...' : 'حذف نهائي'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Layout>
   );
 }

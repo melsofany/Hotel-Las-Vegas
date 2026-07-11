@@ -323,37 +323,8 @@ router.patch("/reservations/:id", async (req, res): Promise<void> => {
   res.json(detail);
 });
 
-router.delete("/reservations/:id", async (req, res): Promise<void> => {
-  const params = DeleteReservationParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-
-  try {
-    await db.transaction(async (tx) => {
-      const [reservation] = await tx
-        .select()
-        .from(reservationsTable)
-        .where(eq(reservationsTable.id, params.data.id))
-        .for("update");
-
-      if (!reservation) throw Object.assign(new Error("Reservation not found"), { status: 404 });
-
-      await tx.delete(reservationsTable).where(eq(reservationsTable.id, params.data.id));
-
-      // Free the room if still active
-      if (["confirmed", "reserved", "checked_in", "pending"].includes(reservation.status)) {
-        await tx.update(roomsTable).set({ status: "available" }).where(eq(roomsTable.id, reservation.roomId));
-      }
-    });
-  } catch (err: unknown) {
-    const e = err as Error & { status?: number };
-    res.status(e.status ?? 500).json({ error: e.message ?? "Internal error" });
-    return;
-  }
-
-  res.sendStatus(204);
+router.delete("/reservations/:id", async (_req, res): Promise<void> => {
+  res.status(403).json({ error: "حذف سجلات الحجز غير مسموح به" });
 });
 
 router.patch("/reservations/:id/checkin", async (req, res): Promise<void> => {
