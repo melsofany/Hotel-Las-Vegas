@@ -16,6 +16,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import {
   useListRooms,
   useListGuests,
   useCreateGuest,
@@ -91,6 +102,61 @@ function addDays(dateStr: string, days: number): string {
 let rowCounter = 1;
 function newRow(): RoomRow {
   return { tempId: String(++rowCounter), roomNumber: '', pricePerNight: '' };
+}
+
+// ─── Searchable room selector — type to filter by room number ───
+type RoomOption = { id: number; number: string; description?: string | null };
+
+function RoomCombobox({
+  value,
+  onChange,
+  rooms,
+}: {
+  value: string;
+  onChange: (roomNumber: string) => void;
+  rooms: RoomOption[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal"
+        >
+          {value ? `غرفة ${value}` : 'اختر غرفة متاحة...'}
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="اكتب رقم الغرفة للبحث..." />
+          <CommandList>
+            <CommandEmpty>لا توجد غرفة بهذا الرقم</CommandEmpty>
+            <CommandGroup>
+              {rooms.map((r) => (
+                <CommandItem
+                  key={r.id}
+                  value={r.number}
+                  onSelect={(selected) => {
+                    onChange(selected === value ? '' : selected);
+                    setOpen(false);
+                  }}
+                >
+                  <Check className={cn('h-4 w-4', value === r.number ? 'opacity-100' : 'opacity-0')} />
+                  غرفة {r.number}{r.description ? ` — ${r.description}` : ''}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export default function NewReservation() {
@@ -569,27 +635,15 @@ export default function NewReservation() {
                 <div key={row.tempId} className="flex items-start gap-3 p-3 bg-muted/20 rounded-lg border border-border">
                   <div className="flex-1 space-y-1">
                     <label className="text-xs text-muted-foreground">رقم الغرفة</label>
-                    <Select
+                    <RoomCombobox
                       value={row.roomNumber}
-                      onValueChange={(val) => updateRow(row.tempId, 'roomNumber', val)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر غرفة متاحة..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {rooms && rooms.length > 0 ? (
-                          rooms
-                            .filter((r) => !roomRows.some((rr) => rr.tempId !== row.tempId && rr.roomNumber === r.number))
-                            .map((r) => (
-                              <SelectItem key={r.id} value={r.number}>
-                                غرفة {r.number}{r.description ? ` — ${r.description}` : ''}
-                              </SelectItem>
-                            ))
-                        ) : (
-                          <div className="p-3 text-sm text-muted-foreground text-center">لا توجد غرف متاحة</div>
-                        )}
-                      </SelectContent>
-                    </Select>
+                      onChange={(val) => updateRow(row.tempId, 'roomNumber', val)}
+                      rooms={
+                        rooms?.filter(
+                          (r) => !roomRows.some((rr) => rr.tempId !== row.tempId && rr.roomNumber === r.number)
+                        ) ?? []
+                      }
+                    />
                   </div>
 
                   <div className="w-40 space-y-1">
