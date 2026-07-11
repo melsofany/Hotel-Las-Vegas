@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
-import { eq, and, gte, lte, lt, gt, sql, ne } from "drizzle-orm";
+import { eq, and, gte, lte, lt, gt, sql, max } from "drizzle-orm";
 import { db, reservationsTable, roomsTable, guestsTable, employeesTable } from "@workspace/db";
+import { parseToken } from "../lib/auth-token";
 import {
   ListReservationsQueryParams,
   CreateReservationBody,
@@ -15,6 +16,15 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+async function getRequestingEmployeeRole(req: import("express").Request): Promise<string | null> {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const parsed = token ? parseToken(token) : null;
+  if (!parsed) return null;
+  const [emp] = await db.select({ role: employeesTable.role }).from(employeesTable).where(eq(employeesTable.id, parsed.employeeId));
+  return emp?.role ?? null;
+}
 
 async function getReservationDetail(id: number) {
   const result = await db
@@ -161,6 +171,9 @@ router.post("/reservations", async (req, res): Promise<void> => {
     return;
   }
 
+  // Fetch the requesting employee's role before entering the transaction
+  const requestorRole = await getRequestingEmployeeRole(req);
+
   let reservationId: number;
 
   try {
@@ -195,6 +208,32 @@ router.post("/reservations", async (req, res): Promise<void> => {
           new Error("الغرفة محجوزة خلال هذه الفترة، يرجى اختيار تواريخ أخرى أو غرفة مختلفة"),
           { status: 409 }
         );
+      }
+
+      // Gap-day check: if there is a previous reservation whose checkout date is
+      // before the new check-in date, the room will sit idle for that gap.
+      // Only admins are allowed to leave such a gap; employees must book back-to-back.
+      const [latestCheckout] = await tx
+        .select({ lastOut: max(reservationsTable.checkOutDate) })
+        .from(reservationsTable)
+        .where(
+          and(
+            eq(reservationsTable.roomId, parsed.data.roomId),
+            sql`${reservationsTable.status} NOT IN ('cancelled')`
+          )
+        );
+
+      if (latestCheckout?.lastOut && parsed.data.checkInDate > latestCheckout.lastOut) {
+        // There is a gap between the last checkout and the new check-in
+        if (requestorRole !== "admin") {
+          throw Object.assign(
+            new Error(
+              `الغرفة ستكون فارغة من ${latestCheckout.lastOut} حتى ${parsed.data.checkInDate}. ` +
+              "لا يُسمح بترك فجوة بين الحجوزات إلا بموافقة المدير. تواصل مع مدير النظام لإتمام هذا الحجز."
+            ),
+            { status: 403 }
+          );
+        }
       }
 
       const [reservation] = await tx.insert(reservationsTable).values({
