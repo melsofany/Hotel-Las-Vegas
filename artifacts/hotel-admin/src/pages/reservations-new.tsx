@@ -569,15 +569,27 @@ export default function NewReservation() {
                 <div key={row.tempId} className="flex items-start gap-3 p-3 bg-muted/20 rounded-lg border border-border">
                   <div className="flex-1 space-y-1">
                     <label className="text-xs text-muted-foreground">رقم الغرفة</label>
-                    <Input
-                      placeholder="اختر من القائمة أو اكتب الرقم..."
-                      list={`rooms-list-${row.tempId}`}
+                    <Select
                       value={row.roomNumber}
-                      onChange={(e) => updateRow(row.tempId, 'roomNumber', e.target.value)}
-                    />
-                    <datalist id={`rooms-list-${row.tempId}`}>
-                      {rooms?.map((r) => <option key={r.id} value={r.number}>غرفة {r.number}</option>)}
-                    </datalist>
+                      onValueChange={(val) => updateRow(row.tempId, 'roomNumber', val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر غرفة متاحة..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {rooms && rooms.length > 0 ? (
+                          rooms
+                            .filter((r) => !roomRows.some((rr) => rr.tempId !== row.tempId && rr.roomNumber === r.number))
+                            .map((r) => (
+                              <SelectItem key={r.id} value={r.number}>
+                                غرفة {r.number}{r.description ? ` — ${r.description}` : ''}
+                              </SelectItem>
+                            ))
+                        ) : (
+                          <div className="p-3 text-sm text-muted-foreground text-center">لا توجد غرف متاحة</div>
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="w-40 space-y-1">
