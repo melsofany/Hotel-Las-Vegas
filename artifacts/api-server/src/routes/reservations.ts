@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { eq, and, gte, lte, lt, gt, sql, ne } from "drizzle-orm";
 import { db, reservationsTable, roomsTable, guestsTable, employeesTable } from "@workspace/db";
 import {
   ListReservationsQueryParams,
@@ -172,8 +172,30 @@ router.post("/reservations", async (req, res): Promise<void> => {
         .where(eq(roomsTable.id, parsed.data.roomId))
         .for("update");
 
-      if (!room) throw Object.assign(new Error("Room not found"), { status: 400 });
-      if (room.status !== "available") throw Object.assign(new Error("Room is not available"), { status: 400 });
+      if (!room) throw Object.assign(new Error("الغرفة غير موجودة"), { status: 400 });
+      if (room.status === "maintenance") throw Object.assign(new Error("الغرفة تحت الصيانة ولا يمكن حجزها"), { status: 400 });
+
+      // Check for overlapping active reservations for this room
+      const overlapping = await tx
+        .select({ id: reservationsTable.id })
+        .from(reservationsTable)
+        .where(
+          and(
+            eq(reservationsTable.roomId, parsed.data.roomId),
+            // Overlap condition: new.checkIn < existing.checkOut AND new.checkOut > existing.checkIn
+            lt(reservationsTable.checkInDate, parsed.data.checkOutDate),
+            gt(reservationsTable.checkOutDate, parsed.data.checkInDate),
+            // Ignore cancelled/checked_out reservations
+            sql`${reservationsTable.status} NOT IN ('cancelled', 'checked_out')`
+          )
+        );
+
+      if (overlapping.length > 0) {
+        throw Object.assign(
+          new Error("الغرفة محجوزة خلال هذه الفترة، يرجى اختيار تواريخ أخرى أو غرفة مختلفة"),
+          { status: 409 }
+        );
+      }
 
       const [reservation] = await tx.insert(reservationsTable).values({
         roomId: parsed.data.roomId,

@@ -208,8 +208,19 @@ export default function NewReservation() {
       });
 
       toast({ title: 'نجاح', description: 'تم إنشاء الحجز بنجاح' });
-    } catch (err) {
-      toast({ title: 'خطأ', description: 'تعذر إنشاء الحجز', variant: 'destructive' });
+    } catch (err: unknown) {
+      // Try to extract the Arabic error message returned by the server
+      let description = 'تعذر إنشاء الحجز';
+      try {
+        const e = err as { response?: Response };
+        if (e?.response) {
+          const body = await e.response.json() as { error?: string };
+          if (body?.error) description = body.error;
+        } else if (err instanceof Error) {
+          description = err.message;
+        }
+      } catch { /* ignore parse errors */ }
+      toast({ title: 'خطأ', description, variant: 'destructive' });
       console.error(err);
     }
   }
