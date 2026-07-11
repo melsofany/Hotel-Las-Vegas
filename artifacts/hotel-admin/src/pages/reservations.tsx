@@ -142,6 +142,7 @@ export default function Reservations() {
                       <span className="inline-flex items-center justify-center px-2 py-1 bg-secondary rounded text-secondary-foreground font-mono text-xs">
                         {res.room?.number}
                       </span>
+                      <div className="text-xs text-muted-foreground mt-1">{res.occupants} {res.occupants === 1 ? 'شخص' : 'أشخاص'}</div>
                     </td>
                     <td className="p-4 text-muted-foreground">
                       <div className="flex flex-col">

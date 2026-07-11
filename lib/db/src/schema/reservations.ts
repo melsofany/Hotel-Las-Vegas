@@ -12,6 +12,7 @@ export const reservationsTable = pgTable("reservations", {
   employeeId: integer("employee_id").notNull().references(() => employeesTable.id),
   checkInDate: date("check_in_date", { mode: "string" }).notNull(),
   checkOutDate: date("check_out_date", { mode: "string" }).notNull(),
+  occupants: integer("occupants").notNull().default(1), // number of guests staying in the room, must not exceed room capacity
   status: text("status").notNull().default("pending"), // pending, confirmed, checked_in, checked_out, cancelled
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull().default("0"),
   paymentReceiptNumber: text("payment_receipt_number").notNull(),

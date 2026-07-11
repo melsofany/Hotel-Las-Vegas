@@ -52,7 +52,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 // ─── Room row type (managed with useState, not react-hook-form) ───
-type RoomRow = { tempId: string; roomNumber: string; pricePerNight: string };
+type RoomRow = { tempId: string; roomNumber: string; pricePerNight: string; occupants: string };
 
 type DiscountType = 'none' | 'percentage' | 'fixed';
 
@@ -64,7 +64,7 @@ type CreatedSummary = {
   checkInDate: string;
   checkOutDate: string;
   nights: number;
-  rooms: Array<{ number: string; pricePerNight: number; subtotal: number; finalAmount: number }>;
+  rooms: Array<{ number: string; pricePerNight: number; occupants: number; subtotal: number; finalAmount: number }>;
   subtotal: number;
   discountType: DiscountType;
   discountValue: number;
@@ -101,11 +101,11 @@ function addDays(dateStr: string, days: number): string {
 
 let rowCounter = 1;
 function newRow(): RoomRow {
-  return { tempId: String(++rowCounter), roomNumber: '', pricePerNight: '' };
+  return { tempId: String(++rowCounter), roomNumber: '', pricePerNight: '', occupants: '1' };
 }
 
 // ─── Searchable room selector — type to filter by room number ───
-type RoomOption = { id: number; number: string; description?: string | null };
+type RoomOption = { id: number; number: string; capacity: number; description?: string | null };
 
 function RoomCombobox({
   value,
@@ -148,7 +148,7 @@ function RoomCombobox({
                   }}
                 >
                   <Check className={cn('h-4 w-4', value === r.number ? 'opacity-100' : 'opacity-0')} />
-                  غرفة {r.number}{r.description ? ` — ${r.description}` : ''}
+                  غرفة {r.number} (تتسع لـ {r.capacity} {r.capacity === 1 ? 'شخص' : 'أشخاص'}){r.description ? ` — ${r.description}` : ''}
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -182,7 +182,7 @@ export default function NewReservation() {
 
   // ── Multiple rooms state ──
   const [roomRows, setRoomRows] = useState<RoomRow[]>([
-    { tempId: '0', roomNumber: '', pricePerNight: '' },
+    { tempId: '0', roomNumber: '', pricePerNight: '', occupants: '1' },
   ]);
 
   // ── Discount state ──
@@ -235,7 +235,7 @@ export default function NewReservation() {
   const finalTotal = useMemo(() => Math.round((subtotal - discountAmount) * 100) / 100, [subtotal, discountAmount]);
 
   // ── Room row helpers ──
-  const updateRow = (tempId: string, field: 'roomNumber' | 'pricePerNight', value: string) => {
+  const updateRow = (tempId: string, field: 'roomNumber' | 'pricePerNight' | 'occupants', value: string) => {
     setRoomRows((prev) => prev.map((r) => r.tempId === tempId ? { ...r, [field]: value } : r));
   };
 
@@ -276,7 +276,7 @@ export default function NewReservation() {
     }
 
     // Validate all room rows
-    const resolvedRooms: Array<{ room: NonNullable<typeof rooms>[number]; pricePerNight: number }> = [];
+    const resolvedRooms: Array<{ room: NonNullable<typeof rooms>[number]; pricePerNight: number; occupants: number }> = [];
     const selectedNumbers = new Set<string>();
 
     for (const row of roomRows) {
@@ -300,7 +300,20 @@ export default function NewReservation() {
         toast({ title: 'خطأ', description: `سعر الليلة لغرفة "${row.roomNumber}" غير صالح`, variant: 'destructive' });
         return;
       }
-      resolvedRooms.push({ room: found, pricePerNight: price });
+      const occupants = Number(row.occupants);
+      if (!Number.isInteger(occupants) || occupants < 1) {
+        toast({ title: 'خطأ', description: `عدد الأشخاص لغرفة "${row.roomNumber}" غير صالح`, variant: 'destructive' });
+        return;
+      }
+      if (occupants > found.capacity) {
+        toast({
+          title: 'خطأ',
+          description: `عدد الأشخاص (${occupants}) يتجاوز السعة القصوى لغرفة ${found.number} (${found.capacity} ${found.capacity === 1 ? 'شخص' : 'أشخاص'})`,
+          variant: 'destructive',
+        });
+        return;
+      }
+      resolvedRooms.push({ room: found, pricePerNight: price, occupants });
     }
 
     try {
@@ -343,6 +356,7 @@ export default function NewReservation() {
             employeeId: employee.id,
             checkInDate: values.checkInDate,
             checkOutDate: computedCheckOut,
+            occupants: rr.occupants,
             totalAmount: rr.finalAmount,
             paymentReceiptNumber: values.invoiceNumber,
             receiptImageUrl: receiptImageUrl ?? undefined,
@@ -367,6 +381,7 @@ export default function NewReservation() {
         rooms: roomsWithAmounts.map((rr) => ({
           number: rr.room.number,
           pricePerNight: rr.pricePerNight,
+          occupants: rr.occupants,
           subtotal: rr.roomSubtotal,
           finalAmount: rr.finalAmount,
         })),
@@ -450,6 +465,7 @@ export default function NewReservation() {
               <thead>
                 <tr className="bg-muted/30 text-muted-foreground">
                   <th className="text-right p-2 font-medium">الغرفة</th>
+                  <th className="text-right p-2 font-medium">عدد الأشخاص</th>
                   <th className="text-right p-2 font-medium">سعر الليلة</th>
                   <th className="text-right p-2 font-medium">الإجمالي</th>
                   {createdSummary.discountType !== 'none' && (
@@ -461,6 +477,7 @@ export default function NewReservation() {
                 {createdSummary.rooms.map((r) => (
                   <tr key={r.number}>
                     <td className="p-2 font-semibold">{r.number}</td>
+                    <td className="p-2">{r.occupants}</td>
                     <td className="p-2">{r.pricePerNight.toFixed(2)} ج.م</td>
                     <td className="p-2">{r.subtotal.toFixed(2)} ج.م</td>
                     {createdSummary.discountType !== 'none' && (
@@ -650,6 +667,34 @@ export default function NewReservation() {
                         ) ?? []
                       }
                     />
+                  </div>
+
+                  <div className="w-32 space-y-1">
+                    {(() => {
+                      const selectedRoom = rooms?.find((r) => r.number === row.roomNumber);
+                      const capacity = selectedRoom?.capacity;
+                      const occupantsNum = Number(row.occupants);
+                      const exceeds = capacity !== undefined && Number.isFinite(occupantsNum) && occupantsNum > capacity;
+                      return (
+                        <>
+                          <label className="text-xs text-muted-foreground">
+                            عدد الأشخاص{capacity !== undefined ? ` (أقصى ${capacity})` : ''}
+                          </label>
+                          <Input
+                            type="number"
+                            min={1}
+                            step={1}
+                            max={capacity}
+                            value={row.occupants}
+                            onChange={(e) => updateRow(row.tempId, 'occupants', e.target.value)}
+                            className={exceeds ? 'border-destructive focus-visible:ring-destructive' : undefined}
+                          />
+                          {exceeds && (
+                            <p className="text-xs text-destructive">يتجاوز سعة الغرفة ({capacity})</p>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <div className="w-40 space-y-1">

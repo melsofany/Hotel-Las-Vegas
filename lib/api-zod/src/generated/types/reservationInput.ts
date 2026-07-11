@@ -12,6 +12,8 @@ export interface ReservationInput {
   employeeId: number;
   checkInDate: string;
   checkOutDate: string;
+  /** @minimum 1 */
+  occupants: number;
   totalAmount?: number;
   paymentReceiptNumber: string;
   receiptImageUrl?: string;

@@ -16,6 +16,7 @@ export interface ReservationDetail {
   employeeId: number;
   checkInDate: string;
   checkOutDate: string;
+  occupants: number;
   status: string;
   totalAmount: number;
   paymentReceiptNumber: string;

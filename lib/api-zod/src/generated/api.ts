@@ -395,6 +395,7 @@ export const ListReservationsResponseItem = zod.object({
   "employeeId": zod.number(),
   "checkInDate": zod.string(),
   "checkOutDate": zod.string(),
+  "occupants": zod.number(),
   "status": zod.string(),
   "totalAmount": zod.number(),
   "paymentReceiptNumber": zod.string(),
@@ -434,12 +435,16 @@ export const ListReservationsResponse = zod.array(ListReservationsResponseItem)
 /**
  * @summary Create a reservation
  */
+
+
+
 export const CreateReservationBody = zod.object({
   "roomId": zod.number(),
   "guestId": zod.number(),
   "employeeId": zod.number(),
   "checkInDate": zod.string(),
   "checkOutDate": zod.string(),
+  "occupants": zod.number().min(1),
   "totalAmount": zod.number().optional(),
   "paymentReceiptNumber": zod.string(),
   "receiptImageUrl": zod.string().optional(),
@@ -453,6 +458,7 @@ export const CreateReservationResponse = zod.object({
   "employeeId": zod.number(),
   "checkInDate": zod.string(),
   "checkOutDate": zod.string(),
+  "occupants": zod.number(),
   "status": zod.string(),
   "totalAmount": zod.number(),
   "paymentReceiptNumber": zod.string(),
@@ -502,6 +508,7 @@ export const GetReservationResponse = zod.object({
   "employeeId": zod.number(),
   "checkInDate": zod.string(),
   "checkOutDate": zod.string(),
+  "occupants": zod.number(),
   "status": zod.string(),
   "totalAmount": zod.number(),
   "paymentReceiptNumber": zod.string(),
@@ -544,12 +551,16 @@ export const UpdateReservationParams = zod.object({
   "id": zod.coerce.number()
 })
 
+
+
+
 export const UpdateReservationBody = zod.object({
   "roomId": zod.number().optional(),
   "guestId": zod.number().optional(),
   "employeeId": zod.number().optional(),
   "checkInDate": zod.string().optional(),
   "checkOutDate": zod.string().optional(),
+  "occupants": zod.number().min(1).optional(),
   "totalAmount": zod.number().optional(),
   "paymentReceiptNumber": zod.string().optional(),
   "notes": zod.string().optional(),
@@ -563,6 +574,7 @@ export const UpdateReservationResponse = zod.object({
   "employeeId": zod.number(),
   "checkInDate": zod.string(),
   "checkOutDate": zod.string(),
+  "occupants": zod.number(),
   "status": zod.string(),
   "totalAmount": zod.number(),
   "paymentReceiptNumber": zod.string(),
@@ -622,6 +634,7 @@ export const CheckInReservationResponse = zod.object({
   "employeeId": zod.number(),
   "checkInDate": zod.string(),
   "checkOutDate": zod.string(),
+  "occupants": zod.number(),
   "status": zod.string(),
   "totalAmount": zod.number(),
   "paymentReceiptNumber": zod.string(),
@@ -671,6 +684,7 @@ export const CheckOutReservationResponse = zod.object({
   "employeeId": zod.number(),
   "checkInDate": zod.string(),
   "checkOutDate": zod.string(),
+  "occupants": zod.number(),
   "status": zod.string(),
   "totalAmount": zod.number(),
   "paymentReceiptNumber": zod.string(),
@@ -720,6 +734,7 @@ export const CancelReservationResponse = zod.object({
   "employeeId": zod.number(),
   "checkInDate": zod.string(),
   "checkOutDate": zod.string(),
+  "occupants": zod.number(),
   "status": zod.string(),
   "totalAmount": zod.number(),
   "paymentReceiptNumber": zod.string(),
@@ -806,6 +821,7 @@ export const GetRecentReservationsResponseItem = zod.object({
   "employeeId": zod.number(),
   "checkInDate": zod.string(),
   "checkOutDate": zod.string(),
+  "occupants": zod.number(),
   "status": zod.string(),
   "totalAmount": zod.number(),
   "paymentReceiptNumber": zod.string(),

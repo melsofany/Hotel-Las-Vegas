@@ -139,6 +139,7 @@ export interface ReservationDetail {
   employeeId: number;
   checkInDate: string;
   checkOutDate: string;
+  occupants: number;
   status: string;
   totalAmount: number;
   paymentReceiptNumber: string;
@@ -158,6 +159,8 @@ export interface ReservationInput {
   employeeId: number;
   checkInDate: string;
   checkOutDate: string;
+  /** @minimum 1 */
+  occupants: number;
   totalAmount?: number;
   paymentReceiptNumber: string;
   receiptImageUrl?: string;
@@ -170,6 +173,8 @@ export interface ReservationUpdate {
   employeeId?: number;
   checkInDate?: string;
   checkOutDate?: string;
+  /** @minimum 1 */
+  occupants?: number;
   totalAmount?: number;
   paymentReceiptNumber?: string;
   notes?: string;

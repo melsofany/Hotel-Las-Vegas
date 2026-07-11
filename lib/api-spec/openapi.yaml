@@ -904,7 +904,7 @@ components:
 
     ReservationDetail:
       type: object
-      required: [id, roomId, guestId, employeeId, checkInDate, checkOutDate, status, totalAmount, paymentReceiptNumber, createdAt, room, guest, employee]
+      required: [id, roomId, guestId, employeeId, checkInDate, checkOutDate, occupants, status, totalAmount, paymentReceiptNumber, createdAt, room, guest, employee]
       properties:
         id:
           type: integer
@@ -918,6 +918,8 @@ components:
           type: string
         checkOutDate:
           type: string
+        occupants:
+          type: integer
         status:
           type: string
         totalAmount:
@@ -939,7 +941,7 @@ components:
 
     ReservationInput:
       type: object
-      required: [roomId, guestId, employeeId, checkInDate, checkOutDate, paymentReceiptNumber]
+      required: [roomId, guestId, employeeId, checkInDate, checkOutDate, occupants, paymentReceiptNumber]
       properties:
         roomId:
           type: integer
@@ -951,6 +953,9 @@ components:
           type: string
         checkOutDate:
           type: string
+        occupants:
+          type: integer
+          minimum: 1
         totalAmount:
           type: number
         paymentReceiptNumber:
@@ -973,6 +978,9 @@ components:
           type: string
         checkOutDate:
           type: string
+        occupants:
+          type: integer
+          minimum: 1
         totalAmount:
           type: number
         paymentReceiptNumber:

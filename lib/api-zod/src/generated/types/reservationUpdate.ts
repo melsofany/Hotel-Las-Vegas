@@ -12,6 +12,8 @@ export interface ReservationUpdate {
   employeeId?: number;
   checkInDate?: string;
   checkOutDate?: string;
+  /** @minimum 1 */
+  occupants?: number;
   totalAmount?: number;
   paymentReceiptNumber?: string;
   notes?: string;

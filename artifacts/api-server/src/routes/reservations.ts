@@ -53,6 +53,7 @@ function formatReservationDetail(
     employeeId: res.employeeId,
     checkInDate: res.checkInDate,
     checkOutDate: res.checkOutDate,
+    occupants: res.occupants,
     status: res.status,
     totalAmount: parseFloat(res.totalAmount),
     paymentReceiptNumber: res.paymentReceiptNumber,
@@ -62,6 +63,7 @@ function formatReservationDetail(
       id: room.id,
       number: room.number,
       status: room.status,
+      capacity: room.capacity,
       description: room.description ?? null,
       createdAt: room.createdAt.toISOString(),
     },
@@ -187,6 +189,12 @@ router.post("/reservations", async (req, res): Promise<void> => {
 
       if (!room) throw Object.assign(new Error("الغرفة غير موجودة"), { status: 400 });
       if (room.status === "maintenance") throw Object.assign(new Error("الغرفة تحت الصيانة ولا يمكن حجزها"), { status: 400 });
+      if (parsed.data.occupants > room.capacity) {
+        throw Object.assign(
+          new Error(`عدد الأشخاص (${parsed.data.occupants}) يتجاوز السعة القصوى لغرفة ${room.number} (${room.capacity} أشخاص)`),
+          { status: 400 }
+        );
+      }
 
       // Check for overlapping active reservations for this room
       const overlapping = await tx
@@ -242,6 +250,7 @@ router.post("/reservations", async (req, res): Promise<void> => {
         employeeId: parsed.data.employeeId,
         checkInDate: parsed.data.checkInDate,
         checkOutDate: parsed.data.checkOutDate,
+        occupants: parsed.data.occupants,
         status: "confirmed",
         totalAmount: String(parsed.data.totalAmount ?? 0),
         paymentReceiptNumber: parsed.data.paymentReceiptNumber,
@@ -299,6 +308,7 @@ router.patch("/reservations/:id", async (req, res): Promise<void> => {
   if (parsed.data.employeeId !== undefined) updateData.employeeId = parsed.data.employeeId;
   if (parsed.data.checkInDate !== undefined) updateData.checkInDate = parsed.data.checkInDate;
   if (parsed.data.checkOutDate !== undefined) updateData.checkOutDate = parsed.data.checkOutDate;
+  if (parsed.data.occupants !== undefined) updateData.occupants = parsed.data.occupants;
   if (parsed.data.totalAmount !== undefined) updateData.totalAmount = String(parsed.data.totalAmount);
   if (parsed.data.paymentReceiptNumber !== undefined) updateData.paymentReceiptNumber = parsed.data.paymentReceiptNumber;
   if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
@@ -306,6 +316,22 @@ router.patch("/reservations/:id", async (req, res): Promise<void> => {
   if (Object.keys(updateData).length === 0) {
     res.status(400).json({ error: "No updatable fields provided" });
     return;
+  }
+
+  if (parsed.data.occupants !== undefined) {
+    const [existing] = await db
+      .select({ roomId: reservationsTable.roomId })
+      .from(reservationsTable)
+      .where(eq(reservationsTable.id, params.data.id));
+    if (existing) {
+      const [room] = await db.select().from(roomsTable).where(eq(roomsTable.id, existing.roomId));
+      if (room && parsed.data.occupants > room.capacity) {
+        res.status(400).json({
+          error: `عدد الأشخاص (${parsed.data.occupants}) يتجاوز السعة القصوى لغرفة ${room.number} (${room.capacity} أشخاص)`,
+        });
+        return;
+      }
+    }
   }
 
   const [updated] = await db
