@@ -1,10 +1,10 @@
 ---
 name: Hotel Las Vegas seed admin
-description: Fresh DB has no login account — first admin must be bootstrapped manually
+description: The system admin account is seeded from environment secrets on server startup, never hardcoded or SQL-inserted by hand.
 ---
 
-A fresh database for this app has zero employees, so the login page has no account to authenticate with, and there is intentionally no signup/bootstrap route (employee creation is admin-gated by design).
+There is intentionally no signup/bootstrap route (employee creation is admin-gated by design), so a fresh database has no account to log in with.
 
-**Why:** the auth model only supports admin-created accounts; there's no self-serve signup for an internal admin tool.
+**Why:** the auth model only supports admin-created accounts, and credentials must never live in code, migrations, or committed docs — the user explicitly asked for the admin identity to come from environment configuration, not the codebase.
 
-**How to apply:** on a fresh DB, seed exactly one admin account directly in the database, hashing the password with the same scheme the app's password module uses. Never write real/active credentials into `replit.md` or other repo-committed docs — treat seeded credentials as user-facing chat output only, and encourage rotating them after first login.
+**How to apply:** the API server reads `ADMIN_PHONE` / `ADMIN_PASSWORD` secrets on every startup (see the seed-admin bootstrap logic in `artifacts/api-server/src/lib`) and creates the admin if missing, or repairs its role/active flag if it was demoted/deactivated — without ever overwriting a password the admin already changed via the UI. To rotate admin credentials, update those two secrets and restart the API server; if the old phone number still exists as a row, change its password from the employees page instead of expecting the seed to touch it.

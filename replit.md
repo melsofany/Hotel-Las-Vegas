@@ -52,8 +52,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 ## Running the project
 
 - Workflows `artifacts/api-server: API Server` (port 8080) and `artifacts/hotel-admin: web` (port 20862) are configured and running. `pnpm install` and `pnpm --filter @workspace/db run push` were run to set up dependencies and the schema.
-- A fresh database has no employees, so the login page has no account to sign in with. There is no signup route by design — seed the first admin manually via a SQL insert into `employees`, hashing the password the same way `artifacts/api-server/src/lib/password.ts` does.
-- A seed admin account was created for this environment: phone `0500000000`. **Change/rotate this password after first login** — don't rely on it long-term and don't commit real credentials to this file.
+- There is no signup route by design. The system admin account is seeded automatically on every API server startup from the `ADMIN_PHONE` / `ADMIN_PASSWORD` secrets (see `artifacts/api-server/src/lib/seed-admin.ts`) — never hardcoded or committed. If the account is missing it's created; if it exists but was demoted/deactivated, its role/active flag is repaired. It never overwrites a password that was already changed from the UI.
+- To rotate the admin's login phone/password, update the `ADMIN_PHONE`/`ADMIN_PASSWORD` secrets and restart the API server (updates the account only if that phone doesn't already exist as an employee — otherwise change the password from the "الموظفين" page instead).
 
 ## Employee management (admin only)
 
