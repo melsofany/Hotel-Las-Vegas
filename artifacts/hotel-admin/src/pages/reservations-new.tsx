@@ -192,7 +192,9 @@ export default function NewReservation() {
   const [discountValue, setDiscountValue] = useState<string>('');
 
   // ── Deposit (advance payment) state ──
+  // Required — a booking cannot be completed without recording an advance payment.
   const [depositPaid, setDepositPaid] = useState<string>('');
+  const [depositError, setDepositError] = useState<string | null>(null);
 
   // ── Created summary (after successful submit) ──
   const [createdSummary, setCreatedSummary] = useState<CreatedSummary | null>(null);
@@ -287,6 +289,15 @@ export default function NewReservation() {
       toast({ title: 'خطأ', description: 'يجب تسجيل الدخول لإنشاء حجز', variant: 'destructive' });
       return;
     }
+
+    // Deposit (advance payment) is mandatory — a booking cannot be completed without it.
+    const depositRaw = depositPaid.trim();
+    if (!depositRaw || !(Number(depositRaw) > 0)) {
+      setDepositError('المبلغ المدفوع مقدماً مطلوب — لا يمكن إتمام الحجز بدونه');
+      toast({ title: 'خطأ', description: 'يرجى إدخال المبلغ المدفوع مقدماً لإتمام الحجز', variant: 'destructive' });
+      return;
+    }
+    setDepositError(null);
 
     // Validate all room rows
     const resolvedRooms: Array<{ room: NonNullable<typeof rooms>[number]; pricePerNight: number; occupants: number }> = [];
@@ -796,22 +807,32 @@ export default function NewReservation() {
               </div>
             </div>
 
-            {/* ── Deposit / advance payment ── */}
+            {/* ── Deposit / advance payment (required) ── */}
             <div className="space-y-3 p-4 bg-muted/10 rounded-lg border border-border">
-              <label className="text-sm font-semibold leading-none block">المبلغ المدفوع مقدماً (اختياري)</label>
+              <label className="text-sm font-semibold leading-none block">
+                المبلغ المدفوع مقدماً
+                <span className="text-destructive mr-1">*</span>
+              </label>
               <Input
                 type="number"
-                min={0}
+                min={0.01}
                 max={finalTotal}
                 step="0.01"
                 placeholder="0.00"
                 value={depositPaid}
-                onChange={(e) => setDepositPaid(e.target.value)}
-                className="w-48"
+                onChange={(e) => {
+                  setDepositPaid(e.target.value);
+                  if (depositError) setDepositError(null);
+                }}
+                className={`w-48 ${depositError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               />
-              <p className="text-xs text-muted-foreground">
-                سيتم حساب المبلغ المتبقي تلقائياً بعد خصم هذا المبلغ من الإجمالي النهائي.
-              </p>
+              {depositError ? (
+                <p className="text-xs text-destructive">{depositError}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  مطلوب لإتمام الحجز — سيتم حساب المبلغ المتبقي تلقائياً بعد خصم هذا المبلغ من الإجمالي النهائي.
+                </p>
+              )}
             </div>
 
             {/* ── Totals summary ── */}
