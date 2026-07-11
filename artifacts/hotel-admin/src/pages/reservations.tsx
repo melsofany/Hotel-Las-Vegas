@@ -1,5 +1,6 @@
 import { Layout } from '@/components/layout';
 import { PageHeader, StatusBadge } from '@/components/ui-custom';
+import { useAuth } from '@/lib/auth-context';
 import { useListReservations, useCheckInReservation, useCheckOutReservation, useCancelReservation, useDeleteReservation } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
 import { Plus, Search, Filter, MoreHorizontal, CheckCircle, LogOut, XCircle, Trash, Edit, Eye } from 'lucide-react';
@@ -29,6 +30,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Reservations() {
+  const { employee } = useAuth();
+  const isAdmin = employee?.role === 'admin';
+
   const [statusFilter, setStatusFilter] = useState<string>('');
   const { data: reservations, isLoading } = useListReservations({ status: statusFilter || undefined }, { query: { queryKey: ['reservations', statusFilter] } });
   const queryClient = useQueryClient();
@@ -201,7 +205,7 @@ export default function Reservations() {
                             </DropdownMenuItem>
                           )}
                           
-                          {(res.status === 'pending' || res.status === 'confirmed') && (
+                          {isAdmin && (res.status === 'pending' || res.status === 'confirmed') && (
                             <DropdownMenuItem onClick={() => cancel.mutate({ id: res.id })}>
                               <XCircle className="mr-2 h-4 w-4 text-status-cancelled ml-2" />
                               <span>إلغاء الحجز</span>

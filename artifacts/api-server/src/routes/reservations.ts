@@ -431,6 +431,13 @@ router.patch("/reservations/:id/checkout", async (req, res): Promise<void> => {
 });
 
 router.patch("/reservations/:id/cancel", async (req, res): Promise<void> => {
+  // Only admins may cancel reservations
+  const requestorRole = await getRequestingEmployeeRole(req);
+  if (requestorRole !== "admin") {
+    res.status(403).json({ error: "إلغاء الحجز متاح لمدير النظام فقط" });
+    return;
+  }
+
   const params = CancelReservationParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
