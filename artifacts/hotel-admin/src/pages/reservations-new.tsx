@@ -246,8 +246,8 @@ export default function NewReservation() {
               <div className="flex justify-between"><span className="text-muted-foreground">تاريخ الدخول:</span><span>{createdReservation.checkInDate}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">عدد الليالي:</span><span>{createdReservation.nights}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">تاريخ الخروج:</span><span>{createdReservation.checkOutDate}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">سعر الليلة:</span><span>${createdReservation.pricePerNight.toFixed(2)}</span></div>
-              <div className="flex justify-between font-bold text-base border-t border-border pt-2 mt-2"><span>الإجمالي:</span><span>${createdReservation.totalAmount.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">سعر الليلة:</span><span>{createdReservation.pricePerNight.toFixed(2)} ج.م</span></div>
+              <div className="flex justify-between font-bold text-base border-t border-border pt-2 mt-2"><span>الإجمالي:</span><span>{createdReservation.totalAmount.toFixed(2)} ج.م</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">حالة الحجز:</span><span>{statusLabels[createdReservation.status] ?? createdReservation.status}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">تاريخ إنشاء الحجز:</span><span>{formatDateTime(createdReservation.createdAt)}</span></div>
               {createdReservation.notes && (
@@ -396,7 +396,7 @@ export default function NewReservation() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none">المبلغ الإجمالي (تلقائي)</label>
-                <Input value={`${totalAmount.toFixed(2)}`} disabled readOnly className="font-bold" />
+                <Input value={`${totalAmount.toFixed(2)} ج.م`} disabled readOnly className="font-bold" />
               </div>
 
               <FormField

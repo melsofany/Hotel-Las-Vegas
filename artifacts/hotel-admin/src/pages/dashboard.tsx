@@ -64,7 +64,7 @@ export default function Dashboard() {
         />
         <DataCard 
           title="إيرادات الشهر" 
-          value={`$${stats?.monthlyRevenue?.toLocaleString() || 0}`} 
+          value={`${stats?.monthlyRevenue?.toLocaleString() || 0} ج.م`} 
           icon={<Coins />}
           valueClassName="text-primary"
         />
@@ -169,7 +169,7 @@ export default function Dashboard() {
                   <td className="py-3 text-muted-foreground">{format(new Date(res.checkInDate), 'dd MMM yyyy', { locale: ar })}</td>
                   <td className="py-3 text-muted-foreground">{format(new Date(res.checkOutDate), 'dd MMM yyyy', { locale: ar })}</td>
                   <td className="py-3"><StatusBadge status={res.status} /></td>
-                  <td className="py-3 font-mono font-medium">${res.totalAmount}</td>
+                  <td className="py-3 font-mono font-medium">{res.totalAmount} ج.م</td>
                 </tr>
               ))}
               {recentReservations.length === 0 && (

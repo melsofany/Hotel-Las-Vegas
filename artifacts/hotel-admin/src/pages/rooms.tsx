@@ -85,7 +85,7 @@ function RoomReservationsTable({ roomId }: { roomId: number }) {
                 <td className="py-3 text-muted-foreground">{format(checkIn,  'dd MMM yyyy', { locale: ar })}</td>
                 <td className="py-3 text-muted-foreground">{format(checkOut, 'dd MMM yyyy', { locale: ar })}</td>
                 <td className="py-3 text-center font-mono">{nights}</td>
-                <td className="py-3 font-mono font-medium text-primary">{res.totalAmount.toLocaleString()} ر.س</td>
+                <td className="py-3 font-mono font-medium text-primary">{res.totalAmount.toLocaleString()} ج.م</td>
                 <td className="py-3"><StatusBadge status={res.status} /></td>
                 <td className="py-3 text-muted-foreground text-xs">{res.employee?.name}</td>
               </tr>
