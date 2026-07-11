@@ -1,9 +1,10 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, CalendarDays, BedDouble, Users, UsersRound, Download, Menu, Bell, Search, Building2, X, LogOut } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, BedDouble, Users, UsersRound, Download, Menu, Bell, Search, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
+import logo from '@/assets/logo.png';
 
 const roleLabels: Record<string, string> = {
   admin: 'مدير النظام',
@@ -32,7 +33,7 @@ export function Layout({ children }: { children: ReactNode }) {
     <>
       <div className="h-16 flex items-center justify-between px-6 border-b border-sidebar-border">
         <Link href="/" className="flex items-center gap-2 group">
-          <Building2 className="h-6 w-6 text-sidebar-primary group-hover:text-sidebar-primary/80 transition-colors" />
+          <img src={logo} alt="فندق لاس فيجاس" className="h-9 w-9 object-contain rounded" />
           <span className="font-sans font-bold text-lg tracking-wide text-sidebar-foreground">فندق لاس فيجاس</span>
         </Link>
         <Button
@@ -115,7 +116,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <Button variant="ghost" size="icon" className="mr-2" onClick={() => setIsSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
             </Button>
-            <Building2 className="h-5 w-5 text-primary ml-2" />
+            <img src={logo} alt="فندق لاس فيجاس" className="h-6 w-6 object-contain rounded ml-2" />
             <span className="font-sans font-bold text-md">لاس فيجاس</span>
           </div>
           

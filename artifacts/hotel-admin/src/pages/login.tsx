@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
-import { Building2, Phone, Lock, Loader2 } from 'lucide-react';
+import { Phone, Lock, Loader2 } from 'lucide-react';
 import { useLoginByPhone } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
+import logo from '@/assets/logo.png';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
@@ -39,8 +40,8 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4" dir="rtl">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <div className="h-14 w-14 rounded-lg bg-primary flex items-center justify-center mb-4">
-            <Building2 className="h-7 w-7 text-primary-foreground" />
+          <div className="h-20 w-20 rounded-lg bg-primary flex items-center justify-center mb-4 overflow-hidden p-2 shadow-sm">
+            <img src={logo} alt="فندق لاس فيجاس" className="h-full w-full object-contain" />
           </div>
           <h1 className="text-xl font-bold text-foreground">فندق لاس فيجاس</h1>
           <p className="text-sm text-muted-foreground mt-1">نظام إدارة الحجوزات</p>

@@ -82,51 +82,51 @@
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.06);
 
-  /* SAP Fiori Light Theme */
-  --background: 210 20% 97%;
-  --foreground: 210 10% 23%;
+  /* Las Vegas Hotel Brand Theme — derived from logo (rich coffee brown + gold) */
+  --background: 34 25% 97%;
+  --foreground: 28 20% 18%;
 
   --card: 0 0% 100%;
-  --card-foreground: 210 10% 23%;
-  --card-border: 210 16% 88%;
+  --card-foreground: 28 20% 18%;
+  --card-border: 30 18% 88%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 210 10% 23%;
-  --popover-border: 210 16% 88%;
+  --popover-foreground: 28 20% 18%;
+  --popover-border: 30 18% 88%;
 
-  --primary: 209 100% 42%; /* SAP Fiori Blue #0a6ed1 */
-  --primary-foreground: 0 0% 100%;
+  --primary: 32 65% 28%; /* Las Vegas Hotel brown */
+  --primary-foreground: 40 30% 97%;
 
-  --secondary: 210 20% 93%;
-  --secondary-foreground: 210 10% 23%;
+  --secondary: 34 22% 92%;
+  --secondary-foreground: 28 20% 18%;
 
-  --muted: 210 20% 93%;
-  --muted-foreground: 210 8% 45%;
+  --muted: 34 22% 92%;
+  --muted-foreground: 28 10% 42%;
 
-  --accent: 209 100% 42%;
-  --accent-foreground: 0 0% 100%;
+  --accent: 32 65% 28%;
+  --accent-foreground: 40 30% 97%;
 
   --destructive: 0 66% 44%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 210 16% 88%;
-  --input: 210 16% 88%;
-  --ring: 209 100% 42%;
+  --border: 30 18% 88%;
+  --input: 30 18% 88%;
+  --ring: 32 65% 28%;
 
-  --chart-1: 209 100% 42%;
-  --chart-2: 199 89% 48%;
-  --chart-3: 175 60% 40%;
-  --chart-4: 35 90% 55%;
-  --chart-5: 260 50% 55%;
+  --chart-1: 32 65% 28%;
+  --chart-2: 35 70% 45%;
+  --chart-3: 175 55% 38%;
+  --chart-4: 199 80% 48%;
+  --chart-5: 260 45% 55%;
 
-  --sidebar: 210 30% 15%;
-  --sidebar-foreground: 210 20% 92%;
-  --sidebar-border: 210 25% 22%;
-  --sidebar-primary: 209 100% 55%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 210 25% 22%;
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 209 100% 55%;
+  --sidebar: 28 45% 10%;
+  --sidebar-foreground: 34 25% 92%;
+  --sidebar-border: 28 30% 18%;
+  --sidebar-primary: 35 70% 48%;
+  --sidebar-primary-foreground: 28 45% 10%;
+  --sidebar-accent: 28 30% 16%;
+  --sidebar-accent-foreground: 40 30% 97%;
+  --sidebar-ring: 35 70% 48%;
 
   --app-font-sans: 'Cairo', 'Segoe UI', Arial, sans-serif;
   --app-font-serif: 'Cairo', 'Segoe UI', Arial, sans-serif;
