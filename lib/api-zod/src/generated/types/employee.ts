@@ -14,5 +14,6 @@ export interface Employee {
   phone: string;
   /** @nullable */
   email?: string | null;
+  isActive: boolean;
   createdAt: string;
 }

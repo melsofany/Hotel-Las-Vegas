@@ -790,7 +790,7 @@ components:
 
     Employee:
       type: object
-      required: [id, name, role, phone, createdAt]
+      required: [id, name, role, phone, isActive, createdAt]
       properties:
         id:
           type: integer
@@ -803,6 +803,8 @@ components:
           type: string
         email:
           type: ["string", "null"]
+        isActive:
+          type: boolean
         createdAt:
           type: string
 
@@ -821,6 +823,8 @@ components:
           type: string
         password:
           type: string
+        isActive:
+          type: boolean
 
     EmployeeUpdate:
       type: object
@@ -836,6 +840,8 @@ components:
           type: string
         password:
           type: string
+        isActive:
+          type: boolean
 
     Guest:
       type: object

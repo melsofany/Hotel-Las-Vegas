@@ -55,6 +55,12 @@ _Populate as you build — explicit user instructions worth remembering across s
 - A fresh database has no employees, so the login page has no account to sign in with. There is no signup route by design — seed the first admin manually via a SQL insert into `employees`, hashing the password the same way `artifacts/api-server/src/lib/password.ts` does.
 - A seed admin account was created for this environment: phone `0500000000`. **Change/rotate this password after first login** — don't rely on it long-term and don't commit real credentials to this file.
 
+## Employee management (admin only)
+
+- Admins can edit an employee's info, change their password, and activate/deactivate accounts from a dropdown menu on each card in "الموظفين". Deactivated employees cannot log in (`/auth/login-by-phone` returns 403).
+- Admins cannot deactivate, demote, or delete their own account (prevents accidental lockout) — the API rejects these with 400.
+- `employees.isActive` (boolean, default true) was added to the schema; ran `pnpm --filter @workspace/db run push` and regenerated the API client/Zod schemas via `pnpm --filter @workspace/api-spec run codegen` after the change.
+
 ## Gotchas
 
 - عند تغيير schema الـ DB، نفّذ `pnpm --filter @workspace/db run push` ثم أعد تشغيل API server

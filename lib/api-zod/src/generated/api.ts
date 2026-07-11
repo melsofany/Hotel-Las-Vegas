@@ -171,6 +171,7 @@ export const LoginByPhoneResponse = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 })
@@ -185,6 +186,7 @@ export const ListEmployeesResponseItem = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 export const ListEmployeesResponse = zod.array(ListEmployeesResponseItem)
@@ -198,7 +200,8 @@ export const CreateEmployeeBody = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().optional(),
-  "password": zod.string()
+  "password": zod.string(),
+  "isActive": zod.boolean().optional()
 })
 
 export const CreateEmployeeResponse = zod.object({
@@ -207,6 +210,7 @@ export const CreateEmployeeResponse = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 
@@ -224,6 +228,7 @@ export const GetEmployeeResponse = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 
@@ -240,7 +245,8 @@ export const UpdateEmployeeBody = zod.object({
   "role": zod.enum(['admin', 'employee']).optional(),
   "phone": zod.string().optional(),
   "email": zod.string().optional(),
-  "password": zod.string().optional()
+  "password": zod.string().optional(),
+  "isActive": zod.boolean().optional()
 })
 
 export const UpdateEmployeeResponse = zod.object({
@@ -249,6 +255,7 @@ export const UpdateEmployeeResponse = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 
@@ -404,6 +411,7 @@ export const ListReservationsResponseItem = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 })
@@ -460,6 +468,7 @@ export const CreateReservationResponse = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 })
@@ -507,6 +516,7 @@ export const GetReservationResponse = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 })
@@ -566,6 +576,7 @@ export const UpdateReservationResponse = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 })
@@ -623,6 +634,7 @@ export const CheckInReservationResponse = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 })
@@ -670,6 +682,7 @@ export const CheckOutReservationResponse = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 })
@@ -717,6 +730,7 @@ export const CancelReservationResponse = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 })
@@ -801,6 +815,7 @@ export const GetRecentReservationsResponseItem = zod.object({
   "role": zod.enum(['admin', 'employee']),
   "phone": zod.string(),
   "email": zod.string().nullish(),
+  "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
 })

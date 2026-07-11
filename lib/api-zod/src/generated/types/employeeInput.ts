@@ -13,4 +13,5 @@ export interface EmployeeInput {
   phone: string;
   email?: string;
   password: string;
+  isActive?: boolean;
 }

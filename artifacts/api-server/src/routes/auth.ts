@@ -28,6 +28,11 @@ router.post("/auth/login-by-phone", async (req, res): Promise<void> => {
     return;
   }
 
+  if (!employee.isActive) {
+    res.status(403).json({ error: "تم إيقاف هذا الحساب. يرجى التواصل مع مدير النظام" });
+    return;
+  }
+
   if (!employee.passwordHash || !verifyPassword(parsed.data.password, employee.passwordHash)) {
     res.status(401).json({ error: "الرقم السري غير صحيح" });
     return;
@@ -43,6 +48,7 @@ router.post("/auth/login-by-phone", async (req, res): Promise<void> => {
       role: employee.role,
       phone: employee.phone,
       email: employee.email ?? null,
+      isActive: employee.isActive,
       createdAt: employee.createdAt.toISOString(),
     },
   });

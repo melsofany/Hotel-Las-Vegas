@@ -49,6 +49,7 @@ export interface Employee {
   phone: string;
   /** @nullable */
   email?: string | null;
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -71,6 +72,7 @@ export interface EmployeeInput {
   phone: string;
   email?: string;
   password: string;
+  isActive?: boolean;
 }
 
 export type EmployeeUpdateRole = typeof EmployeeUpdateRole[keyof typeof EmployeeUpdateRole];
@@ -87,6 +89,7 @@ export interface EmployeeUpdate {
   phone?: string;
   email?: string;
   password?: string;
+  isActive?: boolean;
 }
 
 export interface Guest {
