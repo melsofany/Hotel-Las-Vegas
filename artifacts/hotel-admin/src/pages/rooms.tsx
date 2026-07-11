@@ -1,8 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type FormEvent } from 'react';
 import { Layout } from '@/components/layout';
 import { PageHeader, StatusBadge } from '@/components/ui-custom';
-import { useListRooms, useUpdateRoom, useListReservations } from '@workspace/api-client-react';
-import { BedDouble, Key, Wrench, Ban, Loader2, CalendarDays, Filter, X } from 'lucide-react';
+import {
+  useListRooms,
+  useUpdateRoom,
+  useListReservations,
+  useCreateRoom,
+  useDeleteRoom,
+  getListRoomsQueryKey,
+} from '@workspace/api-client-react';
+import { BedDouble, Key, Wrench, Ban, Loader2, CalendarDays, Filter, X, Plus, Trash2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -16,10 +23,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/lib/auth-context';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import type { Room } from '@workspace/api-client-react';
@@ -106,6 +124,8 @@ type FilterMode = 'all' | 'week' | 'month' | 'custom';
 // Main page
 // ────────────────────────────────────────────────
 export default function Rooms() {
+  const { employee: currentEmployee } = useAuth();
+  const isAdmin = currentEmployee?.role === 'admin';
   const { data: rooms, isLoading: roomsLoading }           = useListRooms();
   const { data: allReservations, isLoading: resLoading }   = useListReservations(
     {},
@@ -119,13 +139,30 @@ export default function Rooms() {
   const [filterMode,   setFilterMode]   = useState<FilterMode>('all');
   const [customFrom,   setCustomFrom]   = useState('');
   const [customTo,     setCustomTo]     = useState('');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [deletingRoom, setDeletingRoom] = useState<Room | null>(null);
 
   const updateRoom = useUpdateRoom({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['rooms'] });
+        queryClient.invalidateQueries({ queryKey: getListRoomsQueryKey() });
         queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
         toast({ title: 'تم التحديث', description: 'تم تحديث حالة الغرفة بنجاح' });
+      },
+    },
+  });
+
+  const deleteRoom = useDeleteRoom({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListRoomsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        toast({ title: 'تم حذف الغرفة' });
+        setDeletingRoom(null);
+      },
+      onError: (err: unknown) => {
+        toast({ title: 'حدث خطأ', description: err instanceof Error ? err.message : undefined, variant: 'destructive' });
+        setDeletingRoom(null);
       },
     },
   });
@@ -194,10 +231,17 @@ export default function Rooms() {
   // ────────────────────────────────────────────────
   return (
     <Layout>
-      <PageHeader
-        title="إدارة الغرف"
-        description="مراقبة وتحديث حالة غرف الفندق — اضغط على أي غرفة لعرض حجوزاتها"
-      />
+      <div className="flex items-center justify-between gap-4 mb-2">
+        <PageHeader
+          title="إدارة الغرف"
+          description="مراقبة وتحديث حالة غرف الفندق — اضغط على أي غرفة لعرض حجوزاتها"
+        />
+        {isAdmin && (
+          <Button onClick={() => setIsAddDialogOpen(true)} className="flex-shrink-0">
+            <Plus className="h-4 w-4 ml-1" /> إضافة غرفة
+          </Button>
+        )}
+      </div>
 
       {/* ── Availability filter bar ── */}
       <div className="mb-6 bg-card border border-card-border rounded-lg p-4">
@@ -299,11 +343,20 @@ export default function Rooms() {
           {visibleRooms.map((room) => (
             <div
               key={room.id}
-              className="bg-card border border-card-border rounded-lg overflow-hidden flex flex-col transition-all hover:border-primary/50 hover:shadow-md cursor-pointer group"
+              className="bg-card border border-card-border rounded-lg overflow-hidden flex flex-col transition-all hover:border-primary/50 hover:shadow-md cursor-pointer group relative"
               onClick={() => setSelectedRoom(room)}
             >
               {/* Header */}
               <div className="p-3 flex flex-col items-center gap-2 border-b border-border bg-muted/10 group-hover:bg-muted/20 transition-colors">
+                {isAdmin && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeletingRoom(room); }}
+                    className="absolute top-1.5 left-1.5 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                    aria-label="حذف الغرفة"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
                 <div className="p-2 bg-background rounded-md border border-border shadow-sm">
                   {getStatusIcon(room.status)}
                 </div>
@@ -363,6 +416,104 @@ export default function Rooms() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── Add room dialog ── */}
+      <AddRoomDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+
+      {/* ── Delete room confirmation ── */}
+      <AlertDialog open={!!deletingRoom} onOpenChange={(open) => !open && setDeletingRoom(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف الغرفة</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف غرفة {deletingRoom?.number}؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deletingRoom && deleteRoom.mutate({ id: deletingRoom.id })}
+            >
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
+  );
+}
+
+// ────────────────────────────────────────────────
+// Add room dialog
+// ────────────────────────────────────────────────
+function AddRoomDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [number, setNumber] = useState('');
+  const [description, setDescription] = useState('');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const createMutation = useCreateRoom({
+    mutation: {
+      onSuccess: () => {
+        toast({ title: 'تم إضافة الغرفة بنجاح' });
+        queryClient.invalidateQueries({ queryKey: getListRoomsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        setNumber('');
+        setDescription('');
+        onOpenChange(false);
+      },
+      onError: (err: unknown) => {
+        toast({ title: 'حدث خطأ', description: err instanceof Error ? err.message : undefined, variant: 'destructive' });
+      },
+    },
+  });
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!number.trim()) return;
+    createMutation.mutate({
+      data: { number: number.trim(), description: description.trim() || undefined },
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>إضافة غرفة جديدة</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4" dir="rtl">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">رقم الغرفة</label>
+            <Input
+              type="text"
+              value={number}
+              onChange={(e) => setNumber(e.target.value)}
+              placeholder="مثال: 101"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">وصف (اختياري)</label>
+            <Input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="مثال: غرفة مزدوجة بإطلالة على البحر"
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={createMutation.isPending}>
+            {createMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin ml-2" /> جاري الإضافة...
+              </>
+            ) : (
+              'إضافة الغرفة'
+            )}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
