@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { OccupancyReportsPanel } from '@/components/occupancy-report';
 
 export default function Reservations() {
   const { employee } = useAuth();
@@ -82,6 +84,17 @@ export default function Reservations() {
         }
       />
 
+      <Tabs defaultValue="list" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="list">الحجوزات</TabsTrigger>
+          <TabsTrigger value="reports">التقارير</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="reports">
+          <OccupancyReportsPanel />
+        </TabsContent>
+
+        <TabsContent value="list">
       <div className="bg-card border border-card-border rounded-lg shadow-sm">
         {/* Filters */}
         <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-4 justify-between items-center">
@@ -202,6 +215,8 @@ export default function Reservations() {
           </table>
         </div>
       </div>
+        </TabsContent>
+      </Tabs>
 
     </Layout>
   );
