@@ -73,12 +73,12 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         {/* Occupancy Chart */}
         <div className="col-span-1 lg:col-span-2 bg-card border border-card-border rounded-lg p-6">
-          <h3 className="font-serif text-lg mb-6 text-foreground font-bold">الإشغال حسب نوع الغرفة</h3>
+          <h3 className="font-serif text-lg mb-6 text-foreground font-bold">إشغال الغرف</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={occupancyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                <XAxis dataKey="type" stroke="#888" tick={{ fill: '#888', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="total" tickFormatter={() => 'الفندق'} stroke="#888" tick={{ fill: '#888', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <YAxis stroke="#888" tick={{ fill: '#888', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <RechartsTooltip 
                   cursor={{ fill: '#222' }}

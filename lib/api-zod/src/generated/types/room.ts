@@ -9,10 +9,7 @@
 export interface Room {
   id: number;
   number: string;
-  type: string;
-  floor: number;
   status: string;
-  pricePerNight: number;
   /** @nullable */
   description?: string | null;
   createdAt: string;

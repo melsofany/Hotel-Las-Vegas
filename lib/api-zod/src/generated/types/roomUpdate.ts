@@ -8,9 +8,6 @@
 
 export interface RoomUpdate {
   number?: string;
-  type?: string;
-  floor?: number;
   status?: string;
-  pricePerNight?: number;
   description?: string;
 }

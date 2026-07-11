@@ -19,13 +19,10 @@ router.get("/rooms", async (req, res): Promise<void> => {
     return;
   }
 
-  let rooms = await db.select().from(roomsTable).orderBy(roomsTable.floor, roomsTable.number);
+  let rooms = await db.select().from(roomsTable).orderBy(roomsTable.number);
 
   if (query.data.status) {
     rooms = rooms.filter((r) => r.status === query.data.status);
-  }
-  if (query.data.type) {
-    rooms = rooms.filter((r) => r.type === query.data.type);
   }
 
   res.json(rooms.map(formatRoom));
@@ -40,10 +37,7 @@ router.post("/rooms", async (req, res): Promise<void> => {
 
   const [room] = await db.insert(roomsTable).values({
     number: parsed.data.number,
-    type: parsed.data.type ?? "standard",
-    floor: parsed.data.floor,
     status: "available",
-    pricePerNight: String(parsed.data.pricePerNight),
     description: parsed.data.description ?? null,
   }).returning();
 
@@ -81,10 +75,7 @@ router.patch("/rooms/:id", async (req, res): Promise<void> => {
 
   const updateData: Record<string, unknown> = {};
   if (parsed.data.number !== undefined) updateData.number = parsed.data.number;
-  if (parsed.data.type !== undefined) updateData.type = parsed.data.type;
-  if (parsed.data.floor !== undefined) updateData.floor = parsed.data.floor;
   if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
-  if (parsed.data.pricePerNight !== undefined) updateData.pricePerNight = String(parsed.data.pricePerNight);
   if (parsed.data.description !== undefined) updateData.description = parsed.data.description;
 
   const [room] = await db.update(roomsTable).set(updateData).where(eq(roomsTable.id, params.data.id)).returning();
@@ -116,10 +107,7 @@ function formatRoom(room: typeof roomsTable.$inferSelect) {
   return {
     id: room.id,
     number: room.number,
-    type: room.type,
-    floor: room.floor,
     status: room.status,
-    pricePerNight: parseFloat(room.pricePerNight),
     description: room.description ?? null,
     createdAt: room.createdAt.toISOString(),
   };

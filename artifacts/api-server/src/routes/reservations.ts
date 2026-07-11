@@ -51,10 +51,7 @@ function formatReservationDetail(
     room: {
       id: room.id,
       number: room.number,
-      type: room.type,
-      floor: room.floor,
       status: room.status,
-      pricePerNight: parseFloat(room.pricePerNight),
       description: room.description ?? null,
       createdAt: room.createdAt.toISOString(),
     },
@@ -104,11 +101,11 @@ router.get("/reservations/export/csv", async (req, res): Promise<void> => {
         .innerJoin(employeesTable, eq(reservationsTable.employeeId, employeesTable.id))
         .orderBy(reservationsTable.createdAt));
 
-  const header = "رقم الحجز,رقم الغرفة,نوع الغرفة,الطابق,اسم الضيف,رقم الهوية,الجنسية,هاتف الضيف,اسم الموظف,دور الموظف,تاريخ الوصول,تاريخ المغادرة,الحالة,المبلغ الإجمالي,رقم إيصال الدفع,ملاحظات,تاريخ الإنشاء\n";
+  const header = "رقم الحجز,رقم الغرفة,اسم الضيف,رقم الهوية,الجنسية,هاتف الضيف,اسم الموظف,دور الموظف,تاريخ الوصول,تاريخ المغادرة,الحالة,المبلغ الإجمالي,رقم إيصال الدفع,ملاحظات,تاريخ الإنشاء\n";
 
   const csvRows = rows.map(({ reservations: r, rooms: rm, guests: g, employees: e }) => {
     const fields = [
-      r.id, rm.number, rm.type, rm.floor,
+      r.id, rm.number,
       g.name, g.nationalId, g.nationality ?? "",
       g.phone, e.name, e.role,
       r.checkInDate, r.checkOutDate, r.status,

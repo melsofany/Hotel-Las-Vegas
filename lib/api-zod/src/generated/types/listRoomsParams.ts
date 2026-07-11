@@ -8,5 +8,4 @@
 
 export type ListRoomsParams = {
 status?: string;
-type?: string;
 };

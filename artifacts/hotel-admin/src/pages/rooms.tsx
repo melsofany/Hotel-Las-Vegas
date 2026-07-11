@@ -41,13 +41,6 @@ export default function Rooms() {
     updateRoom.mutate({ id, data: { status } });
   };
 
-  const typeTranslation: Record<string, string> = {
-    standard: 'قياسية',
-    deluxe: 'ديلوكس',
-    suite: 'جناح',
-    penthouse: 'بنتهاوس'
-  };
-
   return (
     <Layout>
       <PageHeader 
@@ -68,22 +61,12 @@ export default function Rooms() {
                   </div>
                   <div>
                     <div className="font-serif font-bold text-xl text-primary">{room.number}</div>
-                    <div className="text-xs text-muted-foreground">الطابق {room.floor}</div>
                   </div>
                 </div>
                 <StatusBadge status={room.status} />
               </div>
               
               <div className="p-4 flex-1 flex flex-col justify-between gap-4">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">النوع:</span>
-                  <span className="font-medium">{typeTranslation[room.type] || room.type}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">السعر/ليلة:</span>
-                  <span className="font-medium font-mono text-primary">${room.pricePerNight}</span>
-                </div>
-                
                 <div className="pt-4 border-t border-border mt-auto">
                   <label className="text-xs text-muted-foreground mb-1 block">تحديث الحالة السريعة:</label>
                   <Select 

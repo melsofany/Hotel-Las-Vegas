@@ -53,19 +53,10 @@ router.get("/dashboard/stats", async (_req, res): Promise<void> => {
 router.get("/dashboard/occupancy", async (_req, res): Promise<void> => {
   const rooms = await db.select().from(roomsTable);
 
-  const types = ["standard", "deluxe", "suite", "penthouse"];
-  const result = types.map((type) => {
-    const typeRooms = rooms.filter((r) => r.type === type);
-    const occupied = typeRooms.filter((r) => r.status === "occupied" || r.status === "reserved").length;
-    return {
-      type,
-      total: typeRooms.length,
-      occupied,
-      available: typeRooms.filter((r) => r.status === "available").length,
-    };
-  }).filter((item) => item.total > 0);
+  const occupied = rooms.filter((r) => r.status === "occupied" || r.status === "reserved").length;
+  const available = rooms.filter((r) => r.status === "available").length;
 
-  res.json(result);
+  res.json([{ total: rooms.length, occupied, available }]);
 });
 
 router.get("/dashboard/recent-reservations", async (_req, res): Promise<void> => {
@@ -93,10 +84,7 @@ router.get("/dashboard/recent-reservations", async (_req, res): Promise<void> =>
     room: {
       id: rm.id,
       number: rm.number,
-      type: rm.type,
-      floor: rm.floor,
       status: rm.status,
-      pricePerNight: parseFloat(rm.pricePerNight),
       description: rm.description ?? null,
       createdAt: rm.createdAt.toISOString(),
     },

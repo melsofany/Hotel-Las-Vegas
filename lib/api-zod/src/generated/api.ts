@@ -21,17 +21,13 @@ export const HealthCheckResponse = zod.object({
  * @summary List all rooms
  */
 export const ListRoomsQueryParams = zod.object({
-  "status": zod.coerce.string().optional(),
-  "type": zod.coerce.string().optional()
+  "status": zod.coerce.string().optional()
 })
 
 export const ListRoomsResponseItem = zod.object({
   "id": zod.number(),
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
   "status": zod.string(),
-  "pricePerNight": zod.number(),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 })
@@ -43,19 +39,13 @@ export const ListRoomsResponse = zod.array(ListRoomsResponseItem)
  */
 export const CreateRoomBody = zod.object({
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
-  "pricePerNight": zod.number(),
   "description": zod.string().optional()
 })
 
 export const CreateRoomResponse = zod.object({
   "id": zod.number(),
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
   "status": zod.string(),
-  "pricePerNight": zod.number(),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 })
@@ -71,10 +61,7 @@ export const GetRoomParams = zod.object({
 export const GetRoomResponse = zod.object({
   "id": zod.number(),
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
   "status": zod.string(),
-  "pricePerNight": zod.number(),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 })
@@ -89,20 +76,14 @@ export const UpdateRoomParams = zod.object({
 
 export const UpdateRoomBody = zod.object({
   "number": zod.string().optional(),
-  "type": zod.string().optional(),
-  "floor": zod.number().optional(),
   "status": zod.string().optional(),
-  "pricePerNight": zod.number().optional(),
   "description": zod.string().optional()
 })
 
 export const UpdateRoomResponse = zod.object({
   "id": zod.number(),
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
   "status": zod.string(),
-  "pricePerNight": zod.number(),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 })
@@ -404,10 +385,7 @@ export const ListReservationsResponseItem = zod.object({
   "room": zod.object({
   "id": zod.number(),
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
   "status": zod.string(),
-  "pricePerNight": zod.number(),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -463,10 +441,7 @@ export const CreateReservationResponse = zod.object({
   "room": zod.object({
   "id": zod.number(),
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
   "status": zod.string(),
-  "pricePerNight": zod.number(),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -513,10 +488,7 @@ export const GetReservationResponse = zod.object({
   "room": zod.object({
   "id": zod.number(),
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
   "status": zod.string(),
-  "pricePerNight": zod.number(),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -575,10 +547,7 @@ export const UpdateReservationResponse = zod.object({
   "room": zod.object({
   "id": zod.number(),
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
   "status": zod.string(),
-  "pricePerNight": zod.number(),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -635,10 +604,7 @@ export const CheckInReservationResponse = zod.object({
   "room": zod.object({
   "id": zod.number(),
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
   "status": zod.string(),
-  "pricePerNight": zod.number(),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -685,10 +651,7 @@ export const CheckOutReservationResponse = zod.object({
   "room": zod.object({
   "id": zod.number(),
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
   "status": zod.string(),
-  "pricePerNight": zod.number(),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -735,10 +698,7 @@ export const CancelReservationResponse = zod.object({
   "room": zod.object({
   "id": zod.number(),
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
   "status": zod.string(),
-  "pricePerNight": zod.number(),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -822,10 +782,7 @@ export const GetRecentReservationsResponseItem = zod.object({
   "room": zod.object({
   "id": zod.number(),
   "number": zod.string(),
-  "type": zod.string(),
-  "floor": zod.number(),
   "status": zod.string(),
-  "pricePerNight": zod.number(),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),

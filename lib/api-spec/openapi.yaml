@@ -50,11 +50,6 @@ paths:
           required: false
           schema:
             type: string
-        - name: type
-          in: query
-          required: false
-          schema:
-            type: string
       responses:
         "200":
           description: List of rooms
@@ -743,20 +738,14 @@ components:
 
     Room:
       type: object
-      required: [id, number, type, floor, status, pricePerNight, createdAt]
+      required: [id, number, status, createdAt]
       properties:
         id:
           type: integer
         number:
           type: string
-        type:
-          type: string
-        floor:
-          type: integer
         status:
           type: string
-        pricePerNight:
-          type: number
         description:
           type: ["string", "null"]
         createdAt:
@@ -764,16 +753,10 @@ components:
 
     RoomInput:
       type: object
-      required: [number, type, floor, pricePerNight]
+      required: [number]
       properties:
         number:
           type: string
-        type:
-          type: string
-        floor:
-          type: integer
-        pricePerNight:
-          type: number
         description:
           type: string
 
@@ -782,14 +765,8 @@ components:
       properties:
         number:
           type: string
-        type:
-          type: string
-        floor:
-          type: integer
         status:
           type: string
-        pricePerNight:
-          type: number
         description:
           type: string
 

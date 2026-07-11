@@ -68,7 +68,6 @@ export default function NewReservation() {
     guestName: string;
     guestPhone: string;
     roomNumber: string;
-    roomType?: string;
     checkInDate: string;
     checkOutDate: string;
     nights: number;
@@ -196,7 +195,6 @@ export default function NewReservation() {
         guestName: values.guestName,
         guestPhone: values.guestPhone,
         roomNumber: room.number,
-        roomType: room.type,
         checkInDate: values.checkInDate,
         checkOutDate: computedCheckOut,
         nights: values.nights,
@@ -233,7 +231,7 @@ export default function NewReservation() {
               <div className="flex justify-between"><span className="text-muted-foreground">رقم إيصال الدفع:</span><span className="font-mono">{createdReservation.paymentReceiptNumber}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">اسم الضيف:</span><span className="font-medium">{createdReservation.guestName}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">رقم هاتف الضيف:</span><span>{createdReservation.guestPhone}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">رقم الغرفة:</span><span>{createdReservation.roomNumber} {createdReservation.roomType ? `(${createdReservation.roomType})` : ''}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">رقم الغرفة:</span><span>{createdReservation.roomNumber}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">تاريخ الدخول:</span><span>{createdReservation.checkInDate}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">عدد الليالي:</span><span>{createdReservation.nights}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">تاريخ الخروج:</span><span>{createdReservation.checkOutDate}</span></div>
@@ -325,12 +323,12 @@ export default function NewReservation() {
                     </FormControl>
                     <datalist id="rooms-list">
                       {rooms?.map((r) => (
-                        <option key={r.id} value={r.number}>غرفة {r.number} ({r.type}) - ${r.pricePerNight}</option>
+                        <option key={r.id} value={r.number}>غرفة {r.number}</option>
                       ))}
                     </datalist>
                     {selectedRoom && (
                       <FormDescription>
-                        غرفة {selectedRoom.number} - {selectedRoom.type} - ${selectedRoom.pricePerNight} / الليلة
+                        غرفة {selectedRoom.number}
                       </FormDescription>
                     )}
                     <FormMessage />

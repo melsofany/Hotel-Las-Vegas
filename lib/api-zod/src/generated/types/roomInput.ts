@@ -8,8 +8,5 @@
 
 export interface RoomInput {
   number: string;
-  type: string;
-  floor: number;
-  pricePerNight: number;
   description?: string;
 }

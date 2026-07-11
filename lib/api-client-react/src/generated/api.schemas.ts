@@ -12,10 +12,7 @@ export interface HealthStatus {
 export interface Room {
   id: number;
   number: string;
-  type: string;
-  floor: number;
   status: string;
-  pricePerNight: number;
   /** @nullable */
   description?: string | null;
   createdAt: string;
@@ -23,18 +20,12 @@ export interface Room {
 
 export interface RoomInput {
   number: string;
-  type: string;
-  floor: number;
-  pricePerNight: number;
   description?: string;
 }
 
 export interface RoomUpdate {
   number?: string;
-  type?: string;
-  floor?: number;
   status?: string;
-  pricePerNight?: number;
   description?: string;
 }
 
@@ -230,7 +221,6 @@ export interface EmployeeStatItem {
 
 export type ListRoomsParams = {
 status?: string;
-type?: string;
 };
 
 export type ListGuestsParams = {
