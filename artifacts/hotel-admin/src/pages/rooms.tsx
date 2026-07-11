@@ -354,15 +354,15 @@ export default function Rooms() {
                     {/* Delete button — top-left */}
                     <button
                       onClick={(e) => { e.stopPropagation(); setDeletingRoom(room); }}
-                      className="absolute top-1.5 left-1.5 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                      className="absolute top-1.5 left-1.5 p-1 rounded bg-background/80 border border-border text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                       aria-label="حذف الغرفة"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
-                    {/* Edit room number button — top-right */}
+                    {/* Edit room button — top-right */}
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditingRoom(room); }}
-                      className="absolute top-1.5 right-1.5 p-1 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100"
+                      className="absolute top-1.5 right-1.5 p-1 rounded bg-background/80 border border-border text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                       aria-label="تعديل الغرفة"
                     >
                       <Pencil className="h-3.5 w-3.5" />
