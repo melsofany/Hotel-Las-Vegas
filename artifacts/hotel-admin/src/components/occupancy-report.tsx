@@ -4,7 +4,14 @@ import { StatusBadge } from '@/components/ui-custom';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Printer, Download, Users } from 'lucide-react';
+import { Search, Printer, Download, Users, ArrowUpDown } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
@@ -30,10 +37,13 @@ function toCSVValue(value: string | number): string {
   return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
 }
 
+type SortKey = 'room' | 'name';
+
 export function OccupancyReportsPanel() {
   const [day, setDay] = useState<DayOption>('tomorrow');
   const [search, setSearch] = useState('');
   const [isFinancial, setIsFinancial] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>('room');
 
   // Fetch all non-cancelled reservations; occupancy for a given date is computed
   // client-side since it depends on a date range overlap, not an exact match.
@@ -64,10 +74,15 @@ export function OccupancyReportsPanel() {
     );
   }, [occupying, search]);
 
-  const sorted = useMemo(
-    () => [...filtered].sort((a, b) => a.room.number.localeCompare(b.room.number, 'ar', { numeric: true })),
-    [filtered]
-  );
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    if (sortKey === 'room') {
+      arr.sort((a, b) => a.room.number.localeCompare(b.room.number, 'ar', { numeric: true }));
+    } else {
+      arr.sort((a, b) => a.guest.name.localeCompare(b.guest.name, 'ar'));
+    }
+    return arr;
+  }, [filtered, sortKey]);
 
   const totalOccupants = sorted.reduce((sum, r) => sum + (r.occupants || 0), 0);
   const totalAmount = sorted.reduce((sum, r) => sum + (r.totalAmount || 0), 0);
@@ -122,13 +137,27 @@ export function OccupancyReportsPanel() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground whitespace-nowrap">الترتيب حسب</span>
+            <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="room">رقم الغرفة</SelectItem>
+                <SelectItem value="name">اسم الضيف</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="relative w-full sm:w-72">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="بحث باسم الضيف أو رقم الغرفة..."
+              placeholder="تضييق النتائج (اختياري)..."
               className="w-full bg-background border border-input rounded-md pl-4 pr-10 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
