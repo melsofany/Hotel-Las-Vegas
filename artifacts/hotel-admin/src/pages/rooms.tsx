@@ -9,7 +9,7 @@ import {
   useDeleteRoom,
   getListRoomsQueryKey,
 } from '@workspace/api-client-react';
-import { BedDouble, Key, Wrench, Ban, Loader2, CalendarDays, Filter, X, Plus, Trash2 } from 'lucide-react';
+import { BedDouble, Key, Wrench, Ban, Loader2, CalendarDays, Filter, X, Plus, Trash2, Pencil } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -141,6 +141,7 @@ export default function Rooms() {
   const [customTo,     setCustomTo]     = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [deletingRoom, setDeletingRoom] = useState<Room | null>(null);
+  const [editingRoom,  setEditingRoom]  = useState<Room | null>(null);
 
   const updateRoom = useUpdateRoom({
     mutation: {
@@ -349,13 +350,24 @@ export default function Rooms() {
               {/* Header */}
               <div className="p-3 flex flex-col items-center gap-2 border-b border-border bg-muted/10 group-hover:bg-muted/20 transition-colors">
                 {isAdmin && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setDeletingRoom(room); }}
-                    className="absolute top-1.5 left-1.5 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
-                    aria-label="حذف الغرفة"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <>
+                    {/* Delete button — top-left */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeletingRoom(room); }}
+                      className="absolute top-1.5 left-1.5 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                      aria-label="حذف الغرفة"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                    {/* Edit room number button — top-right */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingRoom(room); }}
+                      className="absolute top-1.5 right-1.5 p-1 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100"
+                      aria-label="تعديل رقم الغرفة"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                  </>
                 )}
                 <div className="p-2 bg-background rounded-md border border-border shadow-sm">
                   {getStatusIcon(room.status)}
@@ -420,6 +432,12 @@ export default function Rooms() {
       {/* ── Add room dialog ── */}
       <AddRoomDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
 
+      {/* ── Edit room number dialog ── */}
+      <EditRoomNumberDialog
+        room={editingRoom}
+        onOpenChange={(open) => { if (!open) setEditingRoom(null); }}
+      />
+
       {/* ── Delete room confirmation ── */}
       <AlertDialog open={!!deletingRoom} onOpenChange={(open) => !open && setDeletingRoom(null)}>
         <AlertDialogContent>
@@ -441,6 +459,107 @@ export default function Rooms() {
         </AlertDialogContent>
       </AlertDialog>
     </Layout>
+  );
+}
+
+// ────────────────────────────────────────────────
+// Edit room number dialog (admin only)
+// ────────────────────────────────────────────────
+function EditRoomNumberDialog({
+  room,
+  onOpenChange,
+}: {
+  room: Room | null;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [number, setNumber] = useState('');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Sync input when the dialog opens for a new room
+  const open = !!room;
+  useState(() => {
+    if (room) setNumber(room.number);
+  });
+
+  const updateRoom = useUpdateRoom({
+    mutation: {
+      onSuccess: () => {
+        toast({ title: 'تم تعديل رقم الغرفة بنجاح' });
+        queryClient.invalidateQueries({ queryKey: getListRoomsQueryKey() });
+        onOpenChange(false);
+      },
+      onError: (err: unknown) => {
+        toast({
+          title: 'حدث خطأ',
+          description: err instanceof Error ? err.message : undefined,
+          variant: 'destructive',
+        });
+      },
+    },
+  });
+
+  const handleOpen = (isOpen: boolean) => {
+    if (isOpen && room) setNumber(room.number);
+    onOpenChange(isOpen);
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!room || !number.trim()) return;
+    if (number.trim() === room.number) {
+      onOpenChange(false);
+      return;
+    }
+    updateRoom.mutate({ id: room.id, data: { number: number.trim() } });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>تعديل رقم الغرفة</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4" dir="rtl">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              رقم الغرفة الحالي
+            </label>
+            <p className="text-2xl font-serif font-bold text-primary mb-3">{room?.number}</p>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              رقم الغرفة الجديد
+            </label>
+            <Input
+              type="text"
+              value={number}
+              onChange={(e) => setNumber(e.target.value)}
+              placeholder="مثال: 101"
+              required
+              autoFocus
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button type="submit" className="flex-1" disabled={updateRoom.isPending}>
+              {updateRoom.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin ml-2" /> جاري الحفظ...
+                </>
+              ) : (
+                'حفظ التعديل'
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={updateRoom.isPending}
+            >
+              إلغاء
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
