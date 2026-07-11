@@ -3,30 +3,68 @@ import { PageHeader } from '@/components/ui-custom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import { useMemo, useRef, useState } from 'react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useListRooms, useListGuests, useCreateGuest, useCreateReservation, type ReservationDetail } from '@workspace/api-client-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  useListRooms,
+  useListGuests,
+  useCreateGuest,
+  useCreateReservation,
+  type ReservationDetail,
+} from '@workspace/api-client-react';
 import { useUpload } from '@workspace/object-storage-web';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth-context';
-import { Printer, Upload, Loader2, ImageIcon, X } from 'lucide-react';
+import { Printer, Upload, Loader2, ImageIcon, X, Plus, Trash2 } from 'lucide-react';
 
+// ─── Form schema (fixed fields only — rooms managed separately) ───
 const formSchema = z.object({
   guestName: z.string().min(1, 'اسم الضيف مطلوب'),
   guestPhone: z.string().min(1, 'رقم هاتف الضيف مطلوب'),
-  roomNumber: z.string().min(1, 'يرجى اختيار الغرفة أو كتابة رقمها'),
   checkInDate: z.string().min(1, 'تاريخ الدخول مطلوب'),
   nights: z.coerce.number({ required_error: 'عدد الليالي مطلوب' }).int().min(1, 'ليلة واحدة على الأقل'),
-  pricePerNight: z.coerce.number({ required_error: 'سعر الليلة مطلوب' }).min(0, 'سعر غير صالح'),
-  paymentReceiptNumber: z.string().min(1, 'رقم الإيصال مطلوب'),
+  invoiceNumber: z.string().min(1, 'رقم الفاتورة مطلوب — لا يمكن إتمام الحجز بدونه'),
   notes: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+// ─── Room row type (managed with useState, not react-hook-form) ───
+type RoomRow = { tempId: string; roomNumber: string; pricePerNight: string };
+
+type DiscountType = 'none' | 'percentage' | 'fixed';
+
+// ─── Created reservation summary (supports multiple rooms) ───
+type CreatedSummary = {
+  reservationIds: number[];
+  guestName: string;
+  guestPhone: string;
+  checkInDate: string;
+  checkOutDate: string;
+  nights: number;
+  rooms: Array<{ number: string; pricePerNight: number; subtotal: number; finalAmount: number }>;
+  subtotal: number;
+  discountType: DiscountType;
+  discountValue: number;
+  discountAmount: number;
+  finalTotal: number;
+  invoiceNumber: string;
+  notes?: string;
+  employeeName: string;
+  createdAt: string;
+  status: string;
+};
 
 const statusLabels: Record<string, string> = {
   pending: 'قيد الانتظار',
@@ -50,6 +88,11 @@ function addDays(dateStr: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+let rowCounter = 1;
+function newRow(): RoomRow {
+  return { tempId: String(++rowCounter), roomNumber: '', pricePerNight: '' };
+}
+
 export default function NewReservation() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -58,36 +101,32 @@ export default function NewReservation() {
   const { data: rooms } = useListRooms({ status: 'available' });
   const { data: guests } = useListGuests();
 
+  // ── Receipt image upload ──
   const [receiptImageUrl, setReceiptImageUrl] = useState<string | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [receiptFileName, setReceiptFileName] = useState<string | null>(null);
   const [receiptIsPdf, setReceiptIsPdf] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [createdReservation, setCreatedReservation] = useState<{
-    id: number;
-    guestName: string;
-    guestPhone: string;
-    roomNumber: string;
-    checkInDate: string;
-    checkOutDate: string;
-    nights: number;
-    pricePerNight: number;
-    totalAmount: number;
-    paymentReceiptNumber: string;
-    notes?: string;
-    employeeName: string;
-    createdAt: string;
-    status: string;
-  } | null>(null);
+
+  // ── Multiple rooms state ──
+  const [roomRows, setRoomRows] = useState<RoomRow[]>([
+    { tempId: '0', roomNumber: '', pricePerNight: '' },
+  ]);
+
+  // ── Discount state ──
+  const [discountType, setDiscountType] = useState<DiscountType>('none');
+  const [discountValue, setDiscountValue] = useState<string>('');
+
+  // ── Created summary (after successful submit) ──
+  const [createdSummary, setCreatedSummary] = useState<CreatedSummary | null>(null);
 
   const { uploadFile, isUploading, progress } = useUpload({
     onSuccess: (res) => {
       setReceiptImageUrl(res.objectPath);
-      toast({ title: 'تم الرفع', description: 'تم رفع صورة الإيصال بنجاح' });
+      toast({ title: 'تم الرفع', description: 'تم رفع الإيصال بنجاح' });
     },
-    onError: (err) => {
-      toast({ title: 'خطأ', description: 'تعذر رفع صورة الإيصال', variant: 'destructive' });
-      console.error(err);
+    onError: () => {
+      toast({ title: 'خطأ', description: 'تعذر رفع الإيصال', variant: 'destructive' });
     },
   });
 
@@ -96,35 +135,46 @@ export default function NewReservation() {
     defaultValues: {
       guestName: '',
       guestPhone: '',
-      roomNumber: '',
       checkInDate: new Date().toISOString().slice(0, 10),
       nights: 1,
-      pricePerNight: 0,
-      paymentReceiptNumber: `REC-${Math.floor(Math.random() * 100000)}`,
+      invoiceNumber: '',   // ← required, no auto-generation
       notes: '',
     },
   });
 
   const checkInDate = form.watch('checkInDate');
   const nights = form.watch('nights');
-  const pricePerNight = form.watch('pricePerNight');
 
   const checkOutDate = useMemo(() => addDays(checkInDate, Number(nights) || 0), [checkInDate, nights]);
-  const totalAmount = useMemo(() => {
+
+  // ── Financial calculations ──
+  const subtotal = useMemo(() => {
     const n = Number(nights) || 0;
-    const p = Number(pricePerNight) || 0;
-    return Math.round(n * p * 100) / 100;
-  }, [nights, pricePerNight]);
+    return roomRows.reduce((sum, r) => sum + (Number(r.pricePerNight) || 0) * n, 0);
+  }, [roomRows, nights]);
 
-  const selectedRoom = useMemo(() => {
-    const val = form.watch('roomNumber')?.trim().toLowerCase();
-    if (!val) return undefined;
-    return rooms?.find((r) => r.number.toLowerCase() === val);
-  }, [rooms, form.watch('roomNumber')]);
+  const discountAmount = useMemo(() => {
+    const val = Number(discountValue) || 0;
+    if (discountType === 'percentage') return Math.round(subtotal * val / 100 * 100) / 100;
+    if (discountType === 'fixed') return Math.min(val, subtotal);
+    return 0;
+  }, [discountType, discountValue, subtotal]);
 
-  const createGuest = useCreateGuest();
-  const createRes = useCreateReservation();
+  const finalTotal = useMemo(() => Math.round((subtotal - discountAmount) * 100) / 100, [subtotal, discountAmount]);
 
+  // ── Room row helpers ──
+  const updateRow = (tempId: string, field: 'roomNumber' | 'pricePerNight', value: string) => {
+    setRoomRows((prev) => prev.map((r) => r.tempId === tempId ? { ...r, [field]: value } : r));
+  };
+
+  const addRow = () => setRoomRows((prev) => [...prev, newRow()]);
+
+  const removeRow = (tempId: string) => {
+    if (roomRows.length === 1) return;
+    setRoomRows((prev) => prev.filter((r) => r.tempId !== tempId));
+  };
+
+  // ── File upload ──
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -143,73 +193,125 @@ export default function NewReservation() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
+  const createGuest = useCreateGuest();
+  const createRes = useCreateReservation();
+
+  // ── Submit ──
   async function onSubmit(values: FormValues) {
     if (!employee) {
       toast({ title: 'خطأ', description: 'يجب تسجيل الدخول لإنشاء حجز', variant: 'destructive' });
       return;
     }
 
-    const room = rooms?.find((r) => r.number.trim().toLowerCase() === values.roomNumber.trim().toLowerCase());
-    if (!room) {
-      form.setError('roomNumber', { message: 'لم يتم العثور على غرفة بهذا الرقم ضمن الغرف المتاحة' });
-      return;
+    // Validate all room rows
+    const resolvedRooms: Array<{ room: NonNullable<typeof rooms>[number]; pricePerNight: number }> = [];
+    const selectedNumbers = new Set<string>();
+
+    for (const row of roomRows) {
+      const num = row.roomNumber.trim().toLowerCase();
+      if (!num) {
+        toast({ title: 'خطأ', description: 'يرجى إدخال رقم جميع الغرف', variant: 'destructive' });
+        return;
+      }
+      if (selectedNumbers.has(num)) {
+        toast({ title: 'خطأ', description: `تم اختيار الغرفة "${row.roomNumber}" أكثر من مرة`, variant: 'destructive' });
+        return;
+      }
+      selectedNumbers.add(num);
+      const found = rooms?.find((r) => r.number.trim().toLowerCase() === num);
+      if (!found) {
+        toast({ title: 'خطأ', description: `لم يتم العثور على غرفة "${row.roomNumber}" ضمن الغرف المتاحة`, variant: 'destructive' });
+        return;
+      }
+      const price = Number(row.pricePerNight);
+      if (!Number.isFinite(price) || price < 0) {
+        toast({ title: 'خطأ', description: `سعر الليلة لغرفة "${row.roomNumber}" غير صالح`, variant: 'destructive' });
+        return;
+      }
+      resolvedRooms.push({ room: found, pricePerNight: price });
     }
 
     try {
+      // Resolve guest
       let guestId: number;
       const existingGuest = guests?.find(
-        (g) => g.phone.trim() === values.guestPhone.trim() || g.name.trim().toLowerCase() === values.guestName.trim().toLowerCase()
+        (g) => g.phone.trim() === values.guestPhone.trim() ||
+               g.name.trim().toLowerCase() === values.guestName.trim().toLowerCase()
       );
-
       if (existingGuest) {
         guestId = existingGuest.id;
       } else {
         const newGuest = await createGuest.mutateAsync({
-          data: {
-            name: values.guestName.trim(),
-            phone: values.guestPhone.trim(),
-            nationalId: values.guestPhone.trim(),
-          },
+          data: { name: values.guestName.trim(), phone: values.guestPhone.trim(), nationalId: values.guestPhone.trim() },
         });
         guestId = (newGuest as { id: number }).id;
       }
 
       const computedCheckOut = addDays(values.checkInDate, values.nights);
 
-      const created = await createRes.mutateAsync({
-        data: {
-          roomId: room.id,
-          guestId,
-          employeeId: employee.id,
-          checkInDate: values.checkInDate,
-          checkOutDate: computedCheckOut,
-          totalAmount,
-          paymentReceiptNumber: values.paymentReceiptNumber,
-          receiptImageUrl: receiptImageUrl ?? undefined,
-          notes: values.notes,
-        },
+      // Compute per-room discounted amount proportionally
+      const roomsWithAmounts = resolvedRooms.map((rr) => {
+        const roomSubtotal = rr.pricePerNight * values.nights;
+        const finalAmount = subtotal > 0
+          ? Math.round(roomSubtotal * (finalTotal / subtotal) * 100) / 100
+          : 0;
+        return { ...rr, roomSubtotal, finalAmount };
       });
 
-      setCreatedReservation({
-        id: (created as ReservationDetail).id,
+      // Create one reservation per room
+      const createdIds: number[] = [];
+      let firstCreatedAt = '';
+      let firstStatus = 'confirmed';
+
+      for (const rr of roomsWithAmounts) {
+        const created = await createRes.mutateAsync({
+          data: {
+            roomId: rr.room.id,
+            guestId,
+            employeeId: employee.id,
+            checkInDate: values.checkInDate,
+            checkOutDate: computedCheckOut,
+            totalAmount: rr.finalAmount,
+            paymentReceiptNumber: values.invoiceNumber,
+            receiptImageUrl: receiptImageUrl ?? undefined,
+            notes: values.notes,
+          },
+        });
+        const detail = created as ReservationDetail;
+        createdIds.push(detail.id);
+        if (!firstCreatedAt) {
+          firstCreatedAt = detail.createdAt;
+          firstStatus = detail.status;
+        }
+      }
+
+      setCreatedSummary({
+        reservationIds: createdIds,
         guestName: values.guestName,
         guestPhone: values.guestPhone,
-        roomNumber: room.number,
         checkInDate: values.checkInDate,
         checkOutDate: computedCheckOut,
         nights: values.nights,
-        pricePerNight: values.pricePerNight,
-        totalAmount,
-        paymentReceiptNumber: values.paymentReceiptNumber,
+        rooms: roomsWithAmounts.map((rr) => ({
+          number: rr.room.number,
+          pricePerNight: rr.pricePerNight,
+          subtotal: rr.roomSubtotal,
+          finalAmount: rr.finalAmount,
+        })),
+        subtotal,
+        discountType,
+        discountValue: Number(discountValue) || 0,
+        discountAmount,
+        finalTotal,
+        invoiceNumber: values.invoiceNumber,
         notes: values.notes,
         employeeName: employee.name,
-        createdAt: (created as ReservationDetail).createdAt,
-        status: (created as ReservationDetail).status,
+        createdAt: firstCreatedAt,
+        status: firstStatus,
       });
 
-      toast({ title: 'نجاح', description: 'تم إنشاء الحجز بنجاح' });
+      toast({ title: 'نجاح', description: `تم إنشاء ${createdIds.length} حجز بنجاح` });
     } catch (err: unknown) {
-      // Try to extract the Arabic error message returned by the server
       let description = 'تعذر إنشاء الحجز';
       try {
         const e = err as { response?: Response };
@@ -219,42 +321,125 @@ export default function NewReservation() {
         } else if (err instanceof Error) {
           description = err.message;
         }
-      } catch { /* ignore parse errors */ }
+      } catch { /* ignore */ }
       toast({ title: 'خطأ', description, variant: 'destructive' });
-      console.error(err);
     }
   }
 
-  if (createdReservation) {
+  // ─────────────────────────────────────────────────
+  // RECEIPT SCREEN
+  // ─────────────────────────────────────────────────
+  if (createdSummary) {
     return (
       <Layout>
-        <PageHeader title="تم إنشاء الحجز" description="يمكنك الآن طباعة إيصال الحجز" />
-
+        <PageHeader title="تم إنشاء الحجز" description="يمكنك الآن طباعة الفاتورة" />
         <div className="max-w-xl mx-auto">
           <div id="receipt-print-area" className="bg-card border border-card-border rounded-lg shadow-sm p-8 print:shadow-none print:border-0">
+            {/* Header */}
             <div className="text-center mb-6 border-b border-border pb-4">
               <h2 className="text-xl font-bold">فندق لاس فيجاس</h2>
-              <p className="text-sm text-muted-foreground">إيصال حجز</p>
+              <p className="text-sm text-muted-foreground">فاتورة حجز</p>
             </div>
 
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">رقم الحجز:</span><span className="font-mono">#{createdReservation.id}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">رقم إيصال الدفع:</span><span className="font-mono">{createdReservation.paymentReceiptNumber}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">اسم الضيف:</span><span className="font-medium">{createdReservation.guestName}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">رقم هاتف الضيف:</span><span>{createdReservation.guestPhone}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">رقم الغرفة:</span><span>{createdReservation.roomNumber}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">تاريخ الدخول:</span><span>{createdReservation.checkInDate}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">عدد الليالي:</span><span>{createdReservation.nights}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">تاريخ الخروج:</span><span>{createdReservation.checkOutDate}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">سعر الليلة:</span><span>{createdReservation.pricePerNight.toFixed(2)} ج.م</span></div>
-              <div className="flex justify-between font-bold text-base border-t border-border pt-2 mt-2"><span>الإجمالي:</span><span>{createdReservation.totalAmount.toFixed(2)} ج.م</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">حالة الحجز:</span><span>{statusLabels[createdReservation.status] ?? createdReservation.status}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">تاريخ إنشاء الحجز:</span><span>{formatDateTime(createdReservation.createdAt)}</span></div>
-              {createdReservation.notes && (
-                <div className="flex justify-between"><span className="text-muted-foreground">ملاحظات:</span><span>{createdReservation.notes}</span></div>
+            {/* Meta */}
+            <div className="space-y-2 text-sm mb-4">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">رقم الفاتورة:</span>
+                <span className="font-mono font-semibold">{createdSummary.invoiceNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">أرقام الحجوزات:</span>
+                <span className="font-mono">{createdSummary.reservationIds.map((id) => `#${id}`).join('، ')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">اسم الضيف:</span>
+                <span className="font-medium">{createdSummary.guestName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">رقم الهاتف:</span>
+                <span>{createdSummary.guestPhone}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">تاريخ الدخول:</span>
+                <span>{createdSummary.checkInDate}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">تاريخ الخروج:</span>
+                <span>{createdSummary.checkOutDate}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">عدد الليالي:</span>
+                <span>{createdSummary.nights}</span>
+              </div>
+            </div>
+
+            {/* Rooms table */}
+            <table className="w-full text-sm mb-4 border border-border rounded">
+              <thead>
+                <tr className="bg-muted/30 text-muted-foreground">
+                  <th className="text-right p-2 font-medium">الغرفة</th>
+                  <th className="text-right p-2 font-medium">سعر الليلة</th>
+                  <th className="text-right p-2 font-medium">الإجمالي</th>
+                  {createdSummary.discountType !== 'none' && (
+                    <th className="text-right p-2 font-medium">بعد الخصم</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {createdSummary.rooms.map((r) => (
+                  <tr key={r.number}>
+                    <td className="p-2 font-semibold">{r.number}</td>
+                    <td className="p-2">{r.pricePerNight.toFixed(2)} ج.م</td>
+                    <td className="p-2">{r.subtotal.toFixed(2)} ج.م</td>
+                    {createdSummary.discountType !== 'none' && (
+                      <td className="p-2 text-primary font-medium">{r.finalAmount.toFixed(2)} ج.م</td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Totals */}
+            <div className="space-y-1.5 text-sm border-t border-border pt-3">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">الإجمالي قبل الخصم:</span>
+                <span>{createdSummary.subtotal.toFixed(2)} ج.م</span>
+              </div>
+              {createdSummary.discountType !== 'none' && (
+                <div className="flex justify-between text-destructive">
+                  <span>
+                    الخصم
+                    {createdSummary.discountType === 'percentage'
+                      ? ` (${createdSummary.discountValue}%)`
+                      : ` (مبلغ ثابت)`}:
+                  </span>
+                  <span>- {createdSummary.discountAmount.toFixed(2)} ج.م</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold text-base border-t border-border pt-2 mt-1">
+                <span>الإجمالي النهائي:</span>
+                <span className="text-primary">{createdSummary.finalTotal.toFixed(2)} ج.م</span>
+              </div>
+            </div>
+
+            {/* Other info */}
+            <div className="space-y-2 text-sm mt-4 border-t border-border pt-3">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">حالة الحجز:</span>
+                <span>{statusLabels[createdSummary.status] ?? createdSummary.status}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">تاريخ الإنشاء:</span>
+                <span>{formatDateTime(createdSummary.createdAt)}</span>
+              </div>
+              {createdSummary.notes && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">ملاحظات:</span>
+                  <span>{createdSummary.notes}</span>
+                </div>
               )}
               {receiptPreview && (
-                <div className="pt-4">
+                <div className="pt-3">
                   <span className="text-muted-foreground block mb-2">إيصال الدفع:</span>
                   {receiptIsPdf ? (
                     <a href={receiptPreview} target="_blank" rel="noreferrer" className="text-primary underline text-sm">
@@ -265,15 +450,20 @@ export default function NewReservation() {
                   )}
                 </div>
               )}
-              <div className="flex justify-between border-t border-border pt-2 mt-2"><span className="text-muted-foreground">الموظف المسؤول:</span><span className="font-medium">{createdReservation.employeeName}</span></div>
+              <div className="flex justify-between border-t border-border pt-2 mt-2">
+                <span className="text-muted-foreground">الموظف المسؤول:</span>
+                <span className="font-medium">{createdSummary.employeeName}</span>
+              </div>
             </div>
           </div>
 
           <div className="flex justify-center gap-4 mt-6 print:hidden">
-            <Button variant="outline" onClick={() => setLocation('/reservations')}>العودة إلى الحجوزات</Button>
+            <Button variant="outline" onClick={() => setLocation('/reservations')}>
+              العودة إلى الحجوزات
+            </Button>
             <Button onClick={() => window.print()}>
               <Printer className="ml-2 h-4 w-4" />
-              طباعة الإيصال
+              طباعة الفاتورة
             </Button>
           </div>
         </div>
@@ -281,14 +471,20 @@ export default function NewReservation() {
     );
   }
 
+  // ─────────────────────────────────────────────────
+  // FORM SCREEN
+  // ─────────────────────────────────────────────────
+  const isSubmitting = createRes.isPending || createGuest.isPending;
+
   return (
     <Layout>
-      <PageHeader title="إنشاء حجز جديد" description="إضافة حجز غرفة لضيف جديد أو حالي" />
+      <PageHeader title="إنشاء حجز جديد" description="إضافة حجز غرفة أو أكثر لضيف" />
 
       <div className="max-w-2xl bg-card border border-card-border rounded-lg shadow-sm p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
+            {/* ── Guest info ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
@@ -300,9 +496,7 @@ export default function NewReservation() {
                       <Input placeholder="اكتب اسم الضيف..." list="guests-list" {...field} />
                     </FormControl>
                     <datalist id="guests-list">
-                      {guests?.map((g) => (
-                        <option key={g.id} value={g.name} />
-                      ))}
+                      {guests?.map((g) => <option key={g.id} value={g.name} />)}
                     </datalist>
                     <FormMessage />
                   </FormItem>
@@ -318,30 +512,6 @@ export default function NewReservation() {
                     <FormControl>
                       <Input placeholder="رقم الهاتف..." {...field} />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="roomNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>الغرفة</FormLabel>
-                    <FormControl>
-                      <Input placeholder="اختر من القائمة أو اكتب رقم الغرفة..." list="rooms-list" {...field} />
-                    </FormControl>
-                    <datalist id="rooms-list">
-                      {rooms?.map((r) => (
-                        <option key={r.id} value={r.number}>غرفة {r.number}</option>
-                      ))}
-                    </datalist>
-                    {selectedRoom && (
-                      <FormDescription>
-                        غرفة {selectedRoom.number}
-                      </FormDescription>
-                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -380,45 +550,142 @@ export default function NewReservation() {
                 <Input type="date" value={checkOutDate} disabled readOnly />
               </div>
 
-              <FormField
-                control={form.control}
-                name="pricePerNight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>سعر الليلة ($)</FormLabel>
-                    <FormControl>
-                      <Input type="number" min={0} step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none">المبلغ الإجمالي (تلقائي)</label>
-                <Input value={`${totalAmount.toFixed(2)} ج.م`} disabled readOnly className="font-bold" />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="paymentReceiptNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>رقم إيصال الدفع</FormLabel>
-                    <FormControl>
-                      <Input placeholder="رقم الإيصال..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none">الموظف المسؤول</label>
                 <Input value={employee?.name ?? ''} disabled readOnly />
               </div>
             </div>
 
+            {/* ── Rooms (dynamic) ── */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold leading-none">الغرف المحجوزة</label>
+                <Button type="button" size="sm" variant="outline" onClick={addRow}>
+                  <Plus className="h-3.5 w-3.5 ml-1" /> إضافة غرفة
+                </Button>
+              </div>
+
+              {roomRows.map((row, idx) => (
+                <div key={row.tempId} className="flex items-start gap-3 p-3 bg-muted/20 rounded-lg border border-border">
+                  <div className="flex-1 space-y-1">
+                    <label className="text-xs text-muted-foreground">رقم الغرفة</label>
+                    <Input
+                      placeholder="اختر من القائمة أو اكتب الرقم..."
+                      list={`rooms-list-${row.tempId}`}
+                      value={row.roomNumber}
+                      onChange={(e) => updateRow(row.tempId, 'roomNumber', e.target.value)}
+                    />
+                    <datalist id={`rooms-list-${row.tempId}`}>
+                      {rooms?.map((r) => <option key={r.id} value={r.number}>غرفة {r.number}</option>)}
+                    </datalist>
+                  </div>
+
+                  <div className="w-40 space-y-1">
+                    <label className="text-xs text-muted-foreground">سعر الليلة (ج.م)</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="0.00"
+                      value={row.pricePerNight}
+                      onChange={(e) => updateRow(row.tempId, 'pricePerNight', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="w-32 space-y-1">
+                    <label className="text-xs text-muted-foreground">مجموع الغرفة</label>
+                    <Input
+                      value={`${(Number(row.pricePerNight) * (Number(nights) || 0)).toFixed(2)} ج.م`}
+                      disabled
+                      readOnly
+                      className="text-sm"
+                    />
+                  </div>
+
+                  {roomRows.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeRow(row.tempId)}
+                      className="mt-6 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
+                      aria-label={`حذف الغرفة ${idx + 1}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* ── Discount ── */}
+            <div className="space-y-3 p-4 bg-muted/10 rounded-lg border border-border">
+              <label className="text-sm font-semibold leading-none block">الخصم (اختياري)</label>
+              <div className="flex items-center gap-3">
+                <Select value={discountType} onValueChange={(v) => { setDiscountType(v as DiscountType); setDiscountValue(''); }}>
+                  <SelectTrigger className="w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">بدون خصم</SelectItem>
+                    <SelectItem value="percentage">نسبة مئوية (%)</SelectItem>
+                    <SelectItem value="fixed">مبلغ ثابت (ج.م)</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {discountType !== 'none' && (
+                  <Input
+                    type="number"
+                    min={0}
+                    max={discountType === 'percentage' ? 100 : undefined}
+                    step={discountType === 'percentage' ? '0.1' : '0.01'}
+                    placeholder={discountType === 'percentage' ? 'مثال: 10' : 'مثال: 50'}
+                    value={discountValue}
+                    onChange={(e) => setDiscountValue(e.target.value)}
+                    className="w-40"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* ── Totals summary ── */}
+            <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2 text-sm">
+              <div className="flex justify-between text-muted-foreground">
+                <span>الإجمالي قبل الخصم:</span>
+                <span className="font-mono">{subtotal.toFixed(2)} ج.م</span>
+              </div>
+              {discountType !== 'none' && discountAmount > 0 && (
+                <div className="flex justify-between text-destructive">
+                  <span>
+                    الخصم
+                    {discountType === 'percentage' ? ` (${discountValue}%)` : ' (مبلغ ثابت)'}:
+                  </span>
+                  <span className="font-mono">- {discountAmount.toFixed(2)} ج.م</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold text-base border-t border-primary/20 pt-2">
+                <span>الإجمالي النهائي:</span>
+                <span className="font-mono text-primary">{finalTotal.toFixed(2)} ج.م</span>
+              </div>
+            </div>
+
+            {/* ── Invoice number (required) ── */}
+            <FormField
+              control={form.control}
+              name="invoiceNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    رقم الفاتورة
+                    <span className="text-destructive mr-1">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder="أدخل رقم الفاتورة..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* ── Receipt image ── */}
             <div className="space-y-2">
               <label className="text-sm font-medium leading-none">إيصال الدفع (صورة أو PDF)</label>
               <div className="flex items-center gap-4">
@@ -431,18 +698,12 @@ export default function NewReservation() {
                 />
                 <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
                   {isUploading ? (
-                    <>
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                      جاري الرفع... {progress}%
-                    </>
+                    <><Loader2 className="ml-2 h-4 w-4 animate-spin" /> جاري الرفع... {progress}%</>
                   ) : (
-                    <>
-                      <Upload className="ml-2 h-4 w-4" />
-                      رفع إيصال الدفع
-                    </>
+                    <><Upload className="ml-2 h-4 w-4" /> رفع إيصال الدفع</>
                   )}
                 </Button>
-                {receiptPreview && (
+                {receiptPreview ? (
                   <div className="relative">
                     {receiptIsPdf ? (
                       <div className="h-16 w-16 flex flex-col items-center justify-center rounded border border-border bg-muted text-[10px] text-muted-foreground px-1 text-center">
@@ -452,24 +713,19 @@ export default function NewReservation() {
                     ) : (
                       <img src={receiptPreview} alt="معاينة الإيصال" className="h-16 w-16 object-cover rounded border border-border" />
                     )}
-                    <button
-                      type="button"
-                      onClick={clearReceiptImage}
-                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5"
-                    >
+                    <button type="button" onClick={clearReceiptImage} className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5">
                       <X className="h-3 w-3" />
                     </button>
                   </div>
-                )}
-                {!receiptPreview && (
+                ) : (
                   <span className="text-sm text-muted-foreground flex items-center gap-1">
-                    <ImageIcon className="h-4 w-4" />
-                    اختياري - JPG، PNG أو PDF
+                    <ImageIcon className="h-4 w-4" /> اختياري — JPG، PNG أو PDF
                   </span>
                 )}
               </div>
             </div>
 
+            {/* ── Notes ── */}
             <FormField
               control={form.control}
               name="notes"
@@ -484,12 +740,17 @@ export default function NewReservation() {
               )}
             />
 
+            {/* ── Actions ── */}
             <div className="flex justify-end gap-4 pt-4 border-t border-border">
               <Button type="button" variant="outline" onClick={() => setLocation('/reservations')}>
                 إلغاء
               </Button>
-              <Button type="submit" disabled={createRes.isPending || createGuest.isPending}>
-                {(createRes.isPending || createGuest.isPending) ? 'جاري الإنشاء...' : 'تأكيد الحجز'}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <><Loader2 className="ml-2 h-4 w-4 animate-spin" /> جاري الإنشاء...</>
+                ) : (
+                  `تأكيد الحجز${roomRows.length > 1 ? ` (${roomRows.length} غرف)` : ''}`
+                )}
               </Button>
             </div>
           </form>
