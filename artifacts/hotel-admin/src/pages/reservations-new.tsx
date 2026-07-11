@@ -164,7 +164,13 @@ export default function NewReservation() {
   const { toast } = useToast();
   const { employee } = useAuth();
 
-  const { data: rooms } = useListRooms({ status: 'available' });
+  // Fetch all rooms — real availability for the chosen dates is validated by the
+  // server (overlapping-reservation check), not by the room's status flag, which
+  // only reflects the *current* moment and can go stale until someone checks a
+  // guest out. Filtering by status here would hide rooms that are actually free
+  // for the requested dates (e.g. a past stay that was never checked out).
+  const { data: allRooms } = useListRooms();
+  const rooms = useMemo(() => allRooms?.filter((r) => r.status !== 'maintenance'), [allRooms]);
   const { data: guests } = useListGuests();
 
   // ── Receipt image upload ──
