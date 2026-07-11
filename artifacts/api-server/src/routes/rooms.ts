@@ -19,7 +19,8 @@ router.get("/rooms", async (req, res): Promise<void> => {
     return;
   }
 
-  let rooms = await db.select().from(roomsTable).orderBy(roomsTable.number);
+  let rooms = await db.select().from(roomsTable);
+  rooms.sort((a, b) => compareRoomNumbers(a.number, b.number));
 
   if (query.data.status) {
     rooms = rooms.filter((r) => r.status === query.data.status);
@@ -27,6 +28,21 @@ router.get("/rooms", async (req, res): Promise<void> => {
 
   res.json(rooms.map(formatRoom));
 });
+
+// Room numbers are stored as free-text (e.g. "12", "101A"), so a plain
+// lexicographic sort would order them as "1, 10, 11, ..., 2, 20, ...".
+// Compare numerically when both sides are pure numbers, and fall back to a
+// natural (numeric-aware) string comparison otherwise.
+const roomNumberCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
+function compareRoomNumbers(a: string, b: string): number {
+  const aNum = Number(a);
+  const bNum = Number(b);
+  if (Number.isFinite(aNum) && Number.isFinite(bNum) && a.trim() !== "" && b.trim() !== "") {
+    return aNum - bNum;
+  }
+  return roomNumberCollator.compare(a, b);
+}
 
 router.post("/rooms", async (req, res): Promise<void> => {
   const parsed = CreateRoomBody.safeParse(req.body);
