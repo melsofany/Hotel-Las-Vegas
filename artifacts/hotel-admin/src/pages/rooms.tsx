@@ -9,7 +9,7 @@ import {
   useDeleteRoom,
   getListRoomsQueryKey,
 } from '@workspace/api-client-react';
-import { BedDouble, Key, Wrench, Ban, Loader2, CalendarDays, Filter, X, Plus, Trash2, Pencil } from 'lucide-react';
+import { BedDouble, Key, Wrench, Ban, Loader2, CalendarDays, Filter, X, Plus, Trash2, Pencil, Users } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -363,7 +363,7 @@ export default function Rooms() {
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditingRoom(room); }}
                       className="absolute top-1.5 right-1.5 p-1 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100"
-                      aria-label="تعديل رقم الغرفة"
+                      aria-label="تعديل الغرفة"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
@@ -374,6 +374,10 @@ export default function Rooms() {
                 </div>
                 <div className="font-serif font-bold text-2xl text-primary">{room.number}</div>
                 <StatusBadge status={room.status} />
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Users className="h-3 w-3" />
+                  <span>حتى {room.capacity} أفراد</span>
+                </div>
               </div>
 
               {/* Quick status — stop propagation so it doesn't open dialog */}
@@ -415,8 +419,13 @@ export default function Rooms() {
                 <DialogTitle className="font-serif text-xl text-primary">
                   غرفة {selectedRoom?.number}
                 </DialogTitle>
-                <div className="mt-1">
+                <div className="mt-1 flex items-center gap-2">
                   {selectedRoom && <StatusBadge status={selectedRoom.status} />}
+                  {selectedRoom && (
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Users className="h-3 w-3" /> حد أقصى {selectedRoom.capacity} أفراد
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -432,8 +441,8 @@ export default function Rooms() {
       {/* ── Add room dialog ── */}
       <AddRoomDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
 
-      {/* ── Edit room number dialog ── */}
-      <EditRoomNumberDialog
+      {/* ── Edit room dialog (number + capacity) ── */}
+      <EditRoomDialog
         room={editingRoom}
         onOpenChange={(open) => { if (!open) setEditingRoom(null); }}
       />
@@ -463,9 +472,9 @@ export default function Rooms() {
 }
 
 // ────────────────────────────────────────────────
-// Edit room number dialog (admin only)
+// Edit room dialog — number + capacity (admin only)
 // ────────────────────────────────────────────────
-function EditRoomNumberDialog({
+function EditRoomDialog({
   room,
   onOpenChange,
 }: {
@@ -473,19 +482,23 @@ function EditRoomNumberDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [number, setNumber] = useState('');
+  const [capacity, setCapacity] = useState('2');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Sync input when the dialog opens for a new room
   const open = !!room;
   useState(() => {
-    if (room) setNumber(room.number);
+    if (room) {
+      setNumber(room.number);
+      setCapacity(String(room.capacity));
+    }
   });
 
   const updateRoom = useUpdateRoom({
     mutation: {
       onSuccess: () => {
-        toast({ title: 'تم تعديل رقم الغرفة بنجاح' });
+        toast({ title: 'تم تعديل الغرفة بنجاح' });
         queryClient.invalidateQueries({ queryKey: getListRoomsQueryKey() });
         onOpenChange(false);
       },
@@ -500,34 +513,45 @@ function EditRoomNumberDialog({
   });
 
   const handleOpen = (isOpen: boolean) => {
-    if (isOpen && room) setNumber(room.number);
+    if (isOpen && room) {
+      setNumber(room.number);
+      setCapacity(String(room.capacity));
+    }
     onOpenChange(isOpen);
   };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!room || !number.trim()) return;
-    if (number.trim() === room.number) {
+
+    const parsedCapacity = parseInt(capacity, 10);
+    if (!Number.isFinite(parsedCapacity) || parsedCapacity < 1) {
+      toast({ title: 'الحد الأقصى للأفراد يجب أن يكون رقمًا صحيحًا أكبر من صفر', variant: 'destructive' });
+      return;
+    }
+
+    const data: { number?: string; capacity?: number } = {};
+    if (number.trim() !== room.number) data.number = number.trim();
+    if (parsedCapacity !== room.capacity) data.capacity = parsedCapacity;
+
+    if (Object.keys(data).length === 0) {
       onOpenChange(false);
       return;
     }
-    updateRoom.mutate({ id: room.id, data: { number: number.trim() } });
+
+    updateRoom.mutate({ id: room.id, data });
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>تعديل رقم الغرفة</DialogTitle>
+          <DialogTitle>تعديل الغرفة</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4" dir="rtl">
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              رقم الغرفة الحالي
-            </label>
-            <p className="text-2xl font-serif font-bold text-primary mb-3">{room?.number}</p>
-            <label className="block text-sm font-medium text-foreground mb-1.5">
-              رقم الغرفة الجديد
+              رقم الغرفة
             </label>
             <Input
               type="text"
@@ -537,6 +561,22 @@ function EditRoomNumberDialog({
               required
               autoFocus
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              الحد الأقصى لعدد الأفراد
+            </label>
+            <Input
+              type="number"
+              min={1}
+              value={capacity}
+              onChange={(e) => setCapacity(e.target.value)}
+              placeholder="مثال: 2"
+              required
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              أقصى عدد ضيوف يمكن استقبالهم في هذه الغرفة
+            </p>
           </div>
           <div className="flex gap-2">
             <Button type="submit" className="flex-1" disabled={updateRoom.isPending}>
@@ -568,6 +608,7 @@ function EditRoomNumberDialog({
 // ────────────────────────────────────────────────
 function AddRoomDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [number, setNumber] = useState('');
+  const [capacity, setCapacity] = useState('2');
   const [description, setDescription] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -579,6 +620,7 @@ function AddRoomDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
         queryClient.invalidateQueries({ queryKey: getListRoomsQueryKey() });
         queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
         setNumber('');
+        setCapacity('2');
         setDescription('');
         onOpenChange(false);
       },
@@ -591,8 +633,19 @@ function AddRoomDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!number.trim()) return;
+
+    const parsedCapacity = parseInt(capacity, 10);
+    if (!Number.isFinite(parsedCapacity) || parsedCapacity < 1) {
+      toast({ title: 'الحد الأقصى للأفراد يجب أن يكون رقمًا صحيحًا أكبر من صفر', variant: 'destructive' });
+      return;
+    }
+
     createMutation.mutate({
-      data: { number: number.trim(), description: description.trim() || undefined },
+      data: {
+        number: number.trim(),
+        capacity: parsedCapacity,
+        description: description.trim() || undefined,
+      },
     });
   };
 
@@ -610,6 +663,17 @@ function AddRoomDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               value={number}
               onChange={(e) => setNumber(e.target.value)}
               placeholder="مثال: 101"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">الحد الأقصى لعدد الأفراد</label>
+            <Input
+              type="number"
+              min={1}
+              value={capacity}
+              onChange={(e) => setCapacity(e.target.value)}
+              placeholder="مثال: 2"
               required
             />
           </div>

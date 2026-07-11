@@ -738,7 +738,7 @@ components:
 
     Room:
       type: object
-      required: [id, number, status, createdAt]
+      required: [id, number, status, capacity, createdAt]
       properties:
         id:
           type: integer
@@ -746,6 +746,9 @@ components:
           type: string
         status:
           type: string
+        capacity:
+          type: integer
+          description: Maximum number of guests allowed in this room.
         description:
           type: ["string", "null"]
         createdAt:
@@ -757,6 +760,10 @@ components:
       properties:
         number:
           type: string
+        capacity:
+          type: integer
+          minimum: 1
+          description: Maximum number of guests allowed in this room. Defaults to 2 when omitted.
         description:
           type: string
 
@@ -767,6 +774,10 @@ components:
           type: string
         status:
           type: string
+        capacity:
+          type: integer
+          minimum: 1
+          description: Maximum number of guests allowed in this room.
         description:
           type: string
 

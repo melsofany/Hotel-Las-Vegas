@@ -13,6 +13,8 @@ export interface Room {
   id: number;
   number: string;
   status: string;
+  /** Maximum number of guests allowed in this room. */
+  capacity: number;
   /** @nullable */
   description?: string | null;
   createdAt: string;
@@ -20,12 +22,22 @@ export interface Room {
 
 export interface RoomInput {
   number: string;
+  /**
+     * Maximum number of guests allowed in this room. Defaults to 2 when omitted.
+     * @minimum 1
+     */
+  capacity?: number;
   description?: string;
 }
 
 export interface RoomUpdate {
   number?: string;
   status?: string;
+  /**
+     * Maximum number of guests allowed in this room.
+     * @minimum 1
+     */
+  capacity?: number;
   description?: string;
 }
 

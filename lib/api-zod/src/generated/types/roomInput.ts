@@ -8,5 +8,10 @@
 
 export interface RoomInput {
   number: string;
+  /**
+     * Maximum number of guests allowed in this room. Defaults to 2 when omitted.
+     * @minimum 1
+     */
+  capacity?: number;
   description?: string;
 }

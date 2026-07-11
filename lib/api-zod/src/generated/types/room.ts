@@ -10,6 +10,8 @@ export interface Room {
   id: number;
   number: string;
   status: string;
+  /** Maximum number of guests allowed in this room. */
+  capacity: number;
   /** @nullable */
   description?: string | null;
   createdAt: string;

@@ -28,6 +28,7 @@ export const ListRoomsResponseItem = zod.object({
   "id": zod.number(),
   "number": zod.string(),
   "status": zod.string(),
+  "capacity": zod.number().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 })
@@ -37,8 +38,12 @@ export const ListRoomsResponse = zod.array(ListRoomsResponseItem)
 /**
  * @summary Create a room
  */
+
+
+
 export const CreateRoomBody = zod.object({
   "number": zod.string(),
+  "capacity": zod.number().min(1).optional().describe('Maximum number of guests allowed in this room. Defaults to 2 when omitted.'),
   "description": zod.string().optional()
 })
 
@@ -46,6 +51,7 @@ export const CreateRoomResponse = zod.object({
   "id": zod.number(),
   "number": zod.string(),
   "status": zod.string(),
+  "capacity": zod.number().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 })
@@ -62,6 +68,7 @@ export const GetRoomResponse = zod.object({
   "id": zod.number(),
   "number": zod.string(),
   "status": zod.string(),
+  "capacity": zod.number().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 })
@@ -74,9 +81,13 @@ export const UpdateRoomParams = zod.object({
   "id": zod.coerce.number()
 })
 
+
+
+
 export const UpdateRoomBody = zod.object({
   "number": zod.string().optional(),
   "status": zod.string().optional(),
+  "capacity": zod.number().min(1).optional().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().optional()
 })
 
@@ -84,6 +95,7 @@ export const UpdateRoomResponse = zod.object({
   "id": zod.number(),
   "number": zod.string(),
   "status": zod.string(),
+  "capacity": zod.number().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 })
@@ -393,6 +405,7 @@ export const ListReservationsResponseItem = zod.object({
   "id": zod.number(),
   "number": zod.string(),
   "status": zod.string(),
+  "capacity": zod.number().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -450,6 +463,7 @@ export const CreateReservationResponse = zod.object({
   "id": zod.number(),
   "number": zod.string(),
   "status": zod.string(),
+  "capacity": zod.number().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -498,6 +512,7 @@ export const GetReservationResponse = zod.object({
   "id": zod.number(),
   "number": zod.string(),
   "status": zod.string(),
+  "capacity": zod.number().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -558,6 +573,7 @@ export const UpdateReservationResponse = zod.object({
   "id": zod.number(),
   "number": zod.string(),
   "status": zod.string(),
+  "capacity": zod.number().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -616,6 +632,7 @@ export const CheckInReservationResponse = zod.object({
   "id": zod.number(),
   "number": zod.string(),
   "status": zod.string(),
+  "capacity": zod.number().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -664,6 +681,7 @@ export const CheckOutReservationResponse = zod.object({
   "id": zod.number(),
   "number": zod.string(),
   "status": zod.string(),
+  "capacity": zod.number().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -712,6 +730,7 @@ export const CancelReservationResponse = zod.object({
   "id": zod.number(),
   "number": zod.string(),
   "status": zod.string(),
+  "capacity": zod.number().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),
@@ -797,6 +816,7 @@ export const GetRecentReservationsResponseItem = zod.object({
   "id": zod.number(),
   "number": zod.string(),
   "status": zod.string(),
+  "capacity": zod.number().describe('Maximum number of guests allowed in this room.'),
   "description": zod.string().nullish(),
   "createdAt": zod.string()
 }),

@@ -54,6 +54,7 @@ router.post("/rooms", async (req, res): Promise<void> => {
   const [room] = await db.insert(roomsTable).values({
     number: parsed.data.number,
     status: "available",
+    capacity: parsed.data.capacity ?? 2,
     description: parsed.data.description ?? null,
   }).returning();
 
@@ -92,6 +93,7 @@ router.patch("/rooms/:id", async (req, res): Promise<void> => {
   const updateData: Record<string, unknown> = {};
   if (parsed.data.number !== undefined) updateData.number = parsed.data.number;
   if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
+  if (parsed.data.capacity !== undefined) updateData.capacity = parsed.data.capacity;
   if (parsed.data.description !== undefined) updateData.description = parsed.data.description;
 
   const [room] = await db.update(roomsTable).set(updateData).where(eq(roomsTable.id, params.data.id)).returning();
@@ -124,6 +126,7 @@ function formatRoom(room: typeof roomsTable.$inferSelect) {
     id: room.id,
     number: room.number,
     status: room.status,
+    capacity: room.capacity,
     description: room.description ?? null,
     createdAt: room.createdAt.toISOString(),
   };
