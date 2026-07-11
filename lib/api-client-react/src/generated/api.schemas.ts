@@ -142,6 +142,10 @@ export interface ReservationDetail {
   occupants: number;
   status: string;
   totalAmount: number;
+  /** Amount paid in advance at booking time */
+  depositAmount: number;
+  /** Computed as totalAmount - depositAmount */
+  remainingAmount: number;
   paymentReceiptNumber: string;
   /** @nullable */
   receiptImageUrl?: string | null;
@@ -162,6 +166,8 @@ export interface ReservationInput {
   /** @minimum 1 */
   occupants: number;
   totalAmount?: number;
+  /** Amount paid in advance at booking time (defaults to 0) */
+  depositAmount?: number;
   paymentReceiptNumber: string;
   receiptImageUrl?: string;
   notes?: string;
@@ -176,6 +182,7 @@ export interface ReservationUpdate {
   /** @minimum 1 */
   occupants?: number;
   totalAmount?: number;
+  depositAmount?: number;
   paymentReceiptNumber?: string;
   notes?: string;
   status?: string;
@@ -192,6 +199,10 @@ export interface DashboardStats {
   todayCheckOuts: number;
   monthlyRevenue: number;
   totalRevenue: number;
+  /** Sum of all advance payments (deposits) collected across active reservations */
+  totalDepositsCollected: number;
+  /** Sum of remaining balances (totalAmount - depositAmount) owed across active reservations */
+  totalOutstandingBalance: number;
 }
 
 export interface UploadUrlRequest {

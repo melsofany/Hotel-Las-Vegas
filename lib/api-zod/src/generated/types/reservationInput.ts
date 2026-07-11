@@ -15,6 +15,8 @@ export interface ReservationInput {
   /** @minimum 1 */
   occupants: number;
   totalAmount?: number;
+  /** Amount paid in advance at booking time (defaults to 0) */
+  depositAmount?: number;
   paymentReceiptNumber: string;
   receiptImageUrl?: string;
   notes?: string;

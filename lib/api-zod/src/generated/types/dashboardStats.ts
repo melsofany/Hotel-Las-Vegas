@@ -17,4 +17,8 @@ export interface DashboardStats {
   todayCheckOuts: number;
   monthlyRevenue: number;
   totalRevenue: number;
+  /** Sum of all advance payments (deposits) collected across active reservations */
+  totalDepositsCollected: number;
+  /** Sum of remaining balances (totalAmount - depositAmount) owed across active reservations */
+  totalOutstandingBalance: number;
 }

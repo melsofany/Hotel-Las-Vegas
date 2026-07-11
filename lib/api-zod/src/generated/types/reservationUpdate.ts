@@ -15,6 +15,7 @@ export interface ReservationUpdate {
   /** @minimum 1 */
   occupants?: number;
   totalAmount?: number;
+  depositAmount?: number;
   paymentReceiptNumber?: string;
   notes?: string;
   status?: string;

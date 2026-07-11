@@ -70,6 +70,8 @@ type CreatedSummary = {
   discountValue: number;
   discountAmount: number;
   finalTotal: number;
+  depositPaid: number;
+  remainingBalance: number;
   invoiceNumber: string;
   notes?: string;
   employeeName: string;
@@ -189,6 +191,9 @@ export default function NewReservation() {
   const [discountType, setDiscountType] = useState<DiscountType>('none');
   const [discountValue, setDiscountValue] = useState<string>('');
 
+  // ── Deposit (advance payment) state ──
+  const [depositPaid, setDepositPaid] = useState<string>('');
+
   // ── Created summary (after successful submit) ──
   const [createdSummary, setCreatedSummary] = useState<CreatedSummary | null>(null);
 
@@ -233,6 +238,14 @@ export default function NewReservation() {
   }, [discountType, discountValue, subtotal]);
 
   const finalTotal = useMemo(() => Math.round((subtotal - discountAmount) * 100) / 100, [subtotal, discountAmount]);
+
+  // Deposit is clamped to [0, finalTotal] — a guest cannot pay more in advance than the total due
+  const depositPaidNum = useMemo(() => {
+    const val = Number(depositPaid) || 0;
+    return Math.min(Math.max(val, 0), finalTotal);
+  }, [depositPaid, finalTotal]);
+
+  const remainingBalance = useMemo(() => Math.round((finalTotal - depositPaidNum) * 100) / 100, [finalTotal, depositPaidNum]);
 
   // ── Room row helpers ──
   const updateRow = (tempId: string, field: 'roomNumber' | 'pricePerNight' | 'occupants', value: string) => {
@@ -334,13 +347,18 @@ export default function NewReservation() {
 
       const computedCheckOut = addDays(values.checkInDate, values.nights);
 
-      // Compute per-room discounted amount proportionally
+      // Compute per-room discounted amount proportionally, then split the
+      // advance payment across rooms in that same proportion so each
+      // reservation record carries its own share of the deposit.
       const roomsWithAmounts = resolvedRooms.map((rr) => {
         const roomSubtotal = rr.pricePerNight * values.nights;
         const finalAmount = subtotal > 0
           ? Math.round(roomSubtotal * (finalTotal / subtotal) * 100) / 100
           : 0;
-        return { ...rr, roomSubtotal, finalAmount };
+        const roomDeposit = finalTotal > 0
+          ? Math.round(finalAmount * (depositPaidNum / finalTotal) * 100) / 100
+          : 0;
+        return { ...rr, roomSubtotal, finalAmount, roomDeposit };
       });
 
       // Create one reservation per room
@@ -358,6 +376,7 @@ export default function NewReservation() {
             checkOutDate: computedCheckOut,
             occupants: rr.occupants,
             totalAmount: rr.finalAmount,
+            depositAmount: rr.roomDeposit,
             paymentReceiptNumber: values.invoiceNumber,
             receiptImageUrl: receiptImageUrl ?? undefined,
             notes: values.notes,
@@ -390,6 +409,8 @@ export default function NewReservation() {
         discountValue: Number(discountValue) || 0,
         discountAmount,
         finalTotal,
+        depositPaid: depositPaidNum,
+        remainingBalance,
         invoiceNumber: values.invoiceNumber,
         notes: values.notes,
         employeeName: employee.name,
@@ -508,6 +529,18 @@ export default function NewReservation() {
               <div className="flex justify-between font-bold text-base border-t border-border pt-2 mt-1">
                 <span>الإجمالي النهائي:</span>
                 <span className="text-primary">{createdSummary.finalTotal.toFixed(2)} ج.م</span>
+              </div>
+              {createdSummary.depositPaid > 0 && (
+                <div className="flex justify-between text-status-checked-in">
+                  <span>المبلغ المدفوع مقدماً:</span>
+                  <span>{createdSummary.depositPaid.toFixed(2)} ج.م</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold border-t border-border pt-2 mt-1">
+                <span>المبلغ المتبقي:</span>
+                <span className={createdSummary.remainingBalance > 0 ? 'text-destructive' : 'text-status-checked-in'}>
+                  {createdSummary.remainingBalance.toFixed(2)} ج.م
+                </span>
               </div>
             </div>
 
@@ -763,6 +796,24 @@ export default function NewReservation() {
               </div>
             </div>
 
+            {/* ── Deposit / advance payment ── */}
+            <div className="space-y-3 p-4 bg-muted/10 rounded-lg border border-border">
+              <label className="text-sm font-semibold leading-none block">المبلغ المدفوع مقدماً (اختياري)</label>
+              <Input
+                type="number"
+                min={0}
+                max={finalTotal}
+                step="0.01"
+                placeholder="0.00"
+                value={depositPaid}
+                onChange={(e) => setDepositPaid(e.target.value)}
+                className="w-48"
+              />
+              <p className="text-xs text-muted-foreground">
+                سيتم حساب المبلغ المتبقي تلقائياً بعد خصم هذا المبلغ من الإجمالي النهائي.
+              </p>
+            </div>
+
             {/* ── Totals summary ── */}
             <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2 text-sm">
               <div className="flex justify-between text-muted-foreground">
@@ -781,6 +832,18 @@ export default function NewReservation() {
               <div className="flex justify-between font-bold text-base border-t border-primary/20 pt-2">
                 <span>الإجمالي النهائي:</span>
                 <span className="font-mono text-primary">{finalTotal.toFixed(2)} ج.م</span>
+              </div>
+              {depositPaidNum > 0 && (
+                <div className="flex justify-between text-status-checked-in">
+                  <span>المبلغ المدفوع مقدماً:</span>
+                  <span className="font-mono">{depositPaidNum.toFixed(2)} ج.م</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold border-t border-primary/20 pt-2">
+                <span>المبلغ المتبقي:</span>
+                <span className={`font-mono ${remainingBalance > 0 ? 'text-destructive' : 'text-status-checked-in'}`}>
+                  {remainingBalance.toFixed(2)} ج.م
+                </span>
               </div>
             </div>
 

@@ -32,6 +32,10 @@ router.get("/dashboard/stats", async (_req, res): Promise<void> => {
     .select({
       monthlyRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${reservationsTable.checkInDate} >= ${monthStart} AND ${reservationsTable.checkInDate} <= ${monthEnd} THEN ${reservationsTable.totalAmount}::numeric ELSE 0 END), 0)`,
       totalRevenue: sql<number>`COALESCE(SUM(${reservationsTable.totalAmount}::numeric), 0)`,
+      // Financial reporting: how much has actually been collected as advance
+      // payments vs. how much is still owed by guests on non-cancelled reservations.
+      totalDepositsCollected: sql<number>`COALESCE(SUM(${reservationsTable.depositAmount}::numeric), 0)`,
+      totalOutstandingBalance: sql<number>`COALESCE(SUM(${reservationsTable.totalAmount}::numeric - ${reservationsTable.depositAmount}::numeric), 0)`,
     })
     .from(reservationsTable)
     .where(sql`${reservationsTable.status} != 'cancelled'`);
@@ -47,6 +51,8 @@ router.get("/dashboard/stats", async (_req, res): Promise<void> => {
     todayCheckOuts: Number(resStats.todayCheckOuts),
     monthlyRevenue: parseFloat(String(revenueStats.monthlyRevenue)) || 0,
     totalRevenue: parseFloat(String(revenueStats.totalRevenue)) || 0,
+    totalDepositsCollected: parseFloat(String(revenueStats.totalDepositsCollected)) || 0,
+    totalOutstandingBalance: parseFloat(String(revenueStats.totalOutstandingBalance)) || 0,
   });
 });
 
@@ -78,6 +84,8 @@ router.get("/dashboard/recent-reservations", async (_req, res): Promise<void> =>
     checkOutDate: r.checkOutDate,
     status: r.status,
     totalAmount: parseFloat(r.totalAmount),
+    depositAmount: parseFloat(r.depositAmount),
+    remainingAmount: Math.round((parseFloat(r.totalAmount) - parseFloat(r.depositAmount)) * 100) / 100,
     paymentReceiptNumber: r.paymentReceiptNumber,
     notes: r.notes ?? null,
     createdAt: r.createdAt.toISOString(),

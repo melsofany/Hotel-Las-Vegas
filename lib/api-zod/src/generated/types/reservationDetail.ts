@@ -19,6 +19,10 @@ export interface ReservationDetail {
   occupants: number;
   status: string;
   totalAmount: number;
+  /** Amount paid in advance at booking time */
+  depositAmount: number;
+  /** Computed as totalAmount - depositAmount */
+  remainingAmount: number;
   paymentReceiptNumber: string;
   /** @nullable */
   receiptImageUrl?: string | null;

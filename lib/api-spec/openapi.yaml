@@ -904,7 +904,7 @@ components:
 
     ReservationDetail:
       type: object
-      required: [id, roomId, guestId, employeeId, checkInDate, checkOutDate, occupants, status, totalAmount, paymentReceiptNumber, createdAt, room, guest, employee]
+      required: [id, roomId, guestId, employeeId, checkInDate, checkOutDate, occupants, status, totalAmount, depositAmount, remainingAmount, paymentReceiptNumber, createdAt, room, guest, employee]
       properties:
         id:
           type: integer
@@ -924,6 +924,12 @@ components:
           type: string
         totalAmount:
           type: number
+        depositAmount:
+          type: number
+          description: Amount paid in advance at booking time
+        remainingAmount:
+          type: number
+          description: Computed as totalAmount - depositAmount
         paymentReceiptNumber:
           type: string
         receiptImageUrl:
@@ -958,6 +964,9 @@ components:
           minimum: 1
         totalAmount:
           type: number
+        depositAmount:
+          type: number
+          description: Amount paid in advance at booking time (defaults to 0)
         paymentReceiptNumber:
           type: string
         receiptImageUrl:
@@ -983,6 +992,8 @@ components:
           minimum: 1
         totalAmount:
           type: number
+        depositAmount:
+          type: number
         paymentReceiptNumber:
           type: string
         notes:
@@ -992,7 +1003,7 @@ components:
 
     DashboardStats:
       type: object
-      required: [totalRooms, occupiedRooms, availableRooms, reservedRooms, totalReservations, activeReservations, todayCheckIns, todayCheckOuts, monthlyRevenue, totalRevenue]
+      required: [totalRooms, occupiedRooms, availableRooms, reservedRooms, totalReservations, activeReservations, todayCheckIns, todayCheckOuts, monthlyRevenue, totalRevenue, totalDepositsCollected, totalOutstandingBalance]
       properties:
         totalRooms:
           type: integer
@@ -1014,6 +1025,12 @@ components:
           type: number
         totalRevenue:
           type: number
+        totalDepositsCollected:
+          type: number
+          description: Sum of all advance payments (deposits) collected across active reservations
+        totalOutstandingBalance:
+          type: number
+          description: Sum of remaining balances (totalAmount - depositAmount) owed across active reservations
 
     UploadUrlRequest:
       type: object

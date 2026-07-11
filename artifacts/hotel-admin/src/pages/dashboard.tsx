@@ -70,6 +70,23 @@ export default function Dashboard() {
         />
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <DataCard
+          title="الدفعات المقدمة المحصلة"
+          value={`${stats?.totalDepositsCollected?.toLocaleString() || 0} ج.م`}
+          icon={<Coins />}
+          description="إجمالي المبالغ المدفوعة مقدماً على الحجوزات النشطة"
+          valueClassName="text-status-checked-in"
+        />
+        <DataCard
+          title="المبالغ المتبقية المستحقة"
+          value={`${stats?.totalOutstandingBalance?.toLocaleString() || 0} ج.م`}
+          icon={<Coins />}
+          description="إجمالي المبالغ غير المحصلة بعد من الضيوف"
+          valueClassName="text-destructive"
+        />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         {/* Occupancy Chart */}
         <div className="col-span-1 lg:col-span-2 bg-card border border-card-border rounded-lg p-6">
@@ -152,6 +169,7 @@ export default function Dashboard() {
                 <th className="pb-3 font-medium">تاريخ الخروج</th>
                 <th className="pb-3 font-medium">الحالة</th>
                 <th className="pb-3 font-medium">الإجمالي</th>
+                <th className="pb-3 font-medium">المتبقي</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -170,11 +188,18 @@ export default function Dashboard() {
                   <td className="py-3 text-muted-foreground">{format(new Date(res.checkOutDate), 'dd MMM yyyy', { locale: ar })}</td>
                   <td className="py-3"><StatusBadge status={res.status} /></td>
                   <td className="py-3 font-mono font-medium">{res.totalAmount} ج.م</td>
+                  <td className="py-3 font-mono font-medium">
+                    {res.remainingAmount > 0 ? (
+                      <span className="text-destructive">{res.remainingAmount} ج.م</span>
+                    ) : (
+                      <span className="text-status-checked-in">مسدد</span>
+                    )}
+                  </td>
                 </tr>
               ))}
               {recentReservations.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-muted-foreground">لا توجد حجوزات حديثة</td>
+                  <td colSpan={7} className="py-8 text-center text-muted-foreground">لا توجد حجوزات حديثة</td>
                 </tr>
               )}
             </tbody>

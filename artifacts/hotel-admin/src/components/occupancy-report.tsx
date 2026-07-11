@@ -86,6 +86,8 @@ export function OccupancyReportsPanel() {
 
   const totalOccupants = sorted.reduce((sum, r) => sum + (r.occupants || 0), 0);
   const totalAmount = sorted.reduce((sum, r) => sum + (r.totalAmount || 0), 0);
+  const totalDeposit = sorted.reduce((sum, r) => sum + (r.depositAmount || 0), 0);
+  const totalRemaining = sorted.reduce((sum, r) => sum + (r.remainingAmount || 0), 0);
 
   function handlePrint() {
     window.print();
@@ -93,12 +95,12 @@ export function OccupancyReportsPanel() {
 
   function handleExportCSV() {
     const headers = isFinancial
-      ? ['رقم الغرفة', 'اسم الضيف', 'رقم الهاتف', 'عدد الأشخاص', 'تاريخ الدخول', 'تاريخ الخروج', 'الحالة', 'رقم الإيصال', 'المبلغ الإجمالي']
+      ? ['رقم الغرفة', 'اسم الضيف', 'رقم الهاتف', 'عدد الأشخاص', 'تاريخ الدخول', 'تاريخ الخروج', 'الحالة', 'رقم الإيصال', 'المبلغ الإجمالي', 'المبلغ المدفوع مقدماً', 'المبلغ المتبقي']
       : ['رقم الغرفة', 'اسم الضيف', 'رقم الهاتف', 'عدد الأشخاص', 'تاريخ الدخول', 'تاريخ الخروج', 'الحالة'];
 
     const rows = sorted.map((r) => {
       const base = [r.room.number, r.guest.name, r.guest.phone, r.occupants, r.checkInDate, r.checkOutDate, r.status];
-      return isFinancial ? [...base, r.paymentReceiptNumber, r.totalAmount] : base;
+      return isFinancial ? [...base, r.paymentReceiptNumber, r.totalAmount, r.depositAmount, r.remainingAmount] : base;
     });
 
     const csv = [headers, ...rows].map((row) => row.map(toCSVValue).join(',')).join('\n');
@@ -185,7 +187,12 @@ export function OccupancyReportsPanel() {
       {/* Summary */}
       <div className="px-4 py-3 border-b border-border flex items-center gap-2 text-sm text-muted-foreground">
         <Users className="h-4 w-4" />
-        <span>{sorted.length} غرفة مشغولة — {totalOccupants} شخص{isFinancial && sorted.length > 0 ? ` — إجمالي ${totalAmount.toFixed(2)} ج.م` : ''}</span>
+        <span>
+          {sorted.length} غرفة مشغولة — {totalOccupants} شخص
+          {isFinancial && sorted.length > 0
+            ? ` — إجمالي ${totalAmount.toFixed(2)} ج.م — مدفوع مقدماً ${totalDeposit.toFixed(2)} ج.م — متبقي ${totalRemaining.toFixed(2)} ج.م`
+            : ''}
+        </span>
       </div>
 
       {/* Table */}
@@ -202,16 +209,18 @@ export function OccupancyReportsPanel() {
               <th className="p-4 font-medium">الحالة</th>
               {isFinancial && <th className="p-4 font-medium">رقم الإيصال</th>}
               {isFinancial && <th className="p-4 font-medium">المبلغ الإجمالي</th>}
+              {isFinancial && <th className="p-4 font-medium">المدفوع مقدماً</th>}
+              {isFinancial && <th className="p-4 font-medium">المتبقي</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-border/50">
             {isLoading ? (
               <tr>
-                <td colSpan={isFinancial ? 9 : 7} className="p-8 text-center text-muted-foreground">جاري التحميل...</td>
+                <td colSpan={isFinancial ? 11 : 7} className="p-8 text-center text-muted-foreground">جاري التحميل...</td>
               </tr>
             ) : sorted.length === 0 ? (
               <tr>
-                <td colSpan={isFinancial ? 9 : 7} className="p-8 text-center text-muted-foreground">
+                <td colSpan={isFinancial ? 11 : 7} className="p-8 text-center text-muted-foreground">
                   لا توجد غرف مشغولة في هذا التاريخ
                 </td>
               </tr>
@@ -231,6 +240,12 @@ export function OccupancyReportsPanel() {
                   <td className="p-4"><StatusBadge status={r.status} /></td>
                   {isFinancial && <td className="p-4 font-mono text-xs">{r.paymentReceiptNumber}</td>}
                   {isFinancial && <td className="p-4 font-medium">{r.totalAmount.toFixed(2)} ج.م</td>}
+                  {isFinancial && <td className="p-4 font-medium text-status-checked-in">{r.depositAmount.toFixed(2)} ج.م</td>}
+                  {isFinancial && (
+                    <td className={`p-4 font-medium ${r.remainingAmount > 0 ? 'text-destructive' : 'text-status-checked-in'}`}>
+                      {r.remainingAmount.toFixed(2)} ج.م
+                    </td>
+                  )}
                 </tr>
               ))
             )}

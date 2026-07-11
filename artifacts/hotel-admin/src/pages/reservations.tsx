@@ -130,6 +130,7 @@ export default function Reservations() {
                 <th className="p-4 font-medium">الغرفة</th>
                 <th className="p-4 font-medium">تاريخ الحجز</th>
                 <th className="p-4 font-medium">الحالة</th>
+                <th className="p-4 font-medium">المبلغ المتبقي</th>
                 <th className="p-4 font-medium">بواسطة</th>
                 <th className="p-4 font-medium text-center">الإجراءات</th>
               </tr>
@@ -137,11 +138,11 @@ export default function Reservations() {
             <tbody className="divide-y divide-border/50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-muted-foreground">جاري التحميل...</td>
+                  <td colSpan={8} className="p-8 text-center text-muted-foreground">جاري التحميل...</td>
                 </tr>
               ) : reservations?.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-muted-foreground">لا توجد حجوزات تطابق البحث</td>
+                  <td colSpan={8} className="p-8 text-center text-muted-foreground">لا توجد حجوزات تطابق البحث</td>
                 </tr>
               ) : (
                 reservations?.map((res) => (
@@ -164,6 +165,13 @@ export default function Reservations() {
                       </div>
                     </td>
                     <td className="p-4"><StatusBadge status={res.status} /></td>
+                    <td className="p-4">
+                      {res.remainingAmount > 0 ? (
+                        <span className="font-mono font-medium text-destructive">{res.remainingAmount.toFixed(2)} ج.م</span>
+                      ) : (
+                        <span className="font-mono text-status-checked-in">مسدد بالكامل</span>
+                      )}
+                    </td>
                     <td className="p-4 text-muted-foreground text-xs">{res.employee?.name}</td>
                     <td className="p-4 text-center">
                       <DropdownMenu>

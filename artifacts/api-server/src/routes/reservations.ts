@@ -56,6 +56,8 @@ function formatReservationDetail(
     occupants: res.occupants,
     status: res.status,
     totalAmount: parseFloat(res.totalAmount),
+    depositAmount: parseFloat(res.depositAmount),
+    remainingAmount: Math.round((parseFloat(res.totalAmount) - parseFloat(res.depositAmount)) * 100) / 100,
     paymentReceiptNumber: res.paymentReceiptNumber,
     notes: res.notes ?? null,
     createdAt: res.createdAt.toISOString(),
@@ -113,15 +115,17 @@ router.get("/reservations/export/csv", async (req, res): Promise<void> => {
         .innerJoin(employeesTable, eq(reservationsTable.employeeId, employeesTable.id))
         .orderBy(reservationsTable.createdAt));
 
-  const header = "رقم الحجز,رقم الغرفة,اسم الضيف,رقم الهوية,الجنسية,هاتف الضيف,اسم الموظف,دور الموظف,تاريخ الوصول,تاريخ المغادرة,الحالة,المبلغ الإجمالي,رقم إيصال الدفع,ملاحظات,تاريخ الإنشاء\n";
+  const header = "رقم الحجز,رقم الغرفة,اسم الضيف,رقم الهوية,الجنسية,هاتف الضيف,اسم الموظف,دور الموظف,تاريخ الوصول,تاريخ المغادرة,الحالة,المبلغ الإجمالي,المبلغ المدفوع مقدماً,المبلغ المتبقي,رقم إيصال الدفع,ملاحظات,تاريخ الإنشاء\n";
 
   const csvRows = rows.map(({ reservations: r, rooms: rm, guests: g, employees: e }) => {
+    const total = parseFloat(r.totalAmount);
+    const deposit = parseFloat(r.depositAmount);
     const fields = [
       r.id, rm.number,
       g.name, g.nationalId, g.nationality ?? "",
       g.phone, e.name, e.role,
       r.checkInDate, r.checkOutDate, r.status,
-      parseFloat(r.totalAmount), r.paymentReceiptNumber,
+      total, deposit, Math.round((total - deposit) * 100) / 100, r.paymentReceiptNumber,
       (r.notes ?? "").replace(/,/g, ";"),
       r.createdAt.toISOString(),
     ];
@@ -253,6 +257,7 @@ router.post("/reservations", async (req, res): Promise<void> => {
         occupants: parsed.data.occupants,
         status: "confirmed",
         totalAmount: String(parsed.data.totalAmount ?? 0),
+        depositAmount: String(parsed.data.depositAmount ?? 0),
         paymentReceiptNumber: parsed.data.paymentReceiptNumber,
         notes: parsed.data.notes ?? null,
       }).returning();
@@ -310,6 +315,7 @@ router.patch("/reservations/:id", async (req, res): Promise<void> => {
   if (parsed.data.checkOutDate !== undefined) updateData.checkOutDate = parsed.data.checkOutDate;
   if (parsed.data.occupants !== undefined) updateData.occupants = parsed.data.occupants;
   if (parsed.data.totalAmount !== undefined) updateData.totalAmount = String(parsed.data.totalAmount);
+  if (parsed.data.depositAmount !== undefined) updateData.depositAmount = String(parsed.data.depositAmount);
   if (parsed.data.paymentReceiptNumber !== undefined) updateData.paymentReceiptNumber = parsed.data.paymentReceiptNumber;
   if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
 

@@ -15,6 +15,7 @@ export const reservationsTable = pgTable("reservations", {
   occupants: integer("occupants").notNull().default(1), // number of guests staying in the room, must not exceed room capacity
   status: text("status").notNull().default("pending"), // pending, confirmed, checked_in, checked_out, cancelled
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull().default("0"),
+  depositAmount: numeric("deposit_amount", { precision: 10, scale: 2 }).notNull().default("0"), // advance payment made at booking time; remaining = totalAmount - depositAmount
   paymentReceiptNumber: text("payment_receipt_number").notNull(),
   receiptImageUrl: text("receipt_image_url"),
   notes: text("notes"),
